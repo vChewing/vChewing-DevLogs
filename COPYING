@@ -1,0 +1,20 @@
+The vChewing-DevLogs is provided under:
+
+  SPDX-License-Identifier: LGPL-3.0-or-later
+
+Being under the terms of the LGPL v3.0 License or Later,
+according with:
+
+  LICENSES/preferred/LGPL-3.0-or-later
+
+All contributions to the vChewing-DevLogs are subject to this COPYING file.
+
+------------------
+
+This repository is a development log: it quotes, summarises and links to the
+source code, data and documentation of the vChewing project and of third
+parties. Such quotations remain under the licences of their original
+repositories, and are not relicensed by this file. See the "授權" section of
+./README.md for the list.
+
+$ EOF.
