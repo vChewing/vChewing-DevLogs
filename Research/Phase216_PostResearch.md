@@ -114,6 +114,21 @@ could not build module 'Darwin' / 'CoreFoundation' / 'Foundation'
 
 ---
 
+**2026-09-16 更正（本節前半之「`Data` 說」不成立）**：以同一組 Swift 5.10.1 ＋ `MacOSX13.3.sdk` 重測，`let d = Data()` 於 `-target x86_64-apple-macosx10.9` 下**編譯並連結皆 rc=0**，產物 `vtool -show-build` 記為 `LC_VERSION_MIN_MACOSX version 10.9 / sdk 10.9`（`Data` 於該 SDK 之註記並非 10.10 起）。原實測極可能是在**未帶 `-sdk`** 的環境下跑的——那樣連 `import Foundation` 都不成立（`error: no such module 'Foundation'`），錯誤訊息容易被誤讀成可用性問題。
+
+**10.9 的真正阻礙是 5 支 AppKit API（共 57 筆 availability 錯誤、涉 7 檔）**，全倉於 10.9 探針下實測：
+
+| API | 筆數 | 落點 |
+|---|---|---|
+| `NSViewController.addChild` | 36 | `SettingsUI/SettingsCocoa/{VwrSettingsCocoaPanes,CtlSettingsCocoa}.swift` |
+| `NSSearchField.sendsWholeSearchString`／`.sendsSearchStringImmediately`／`.placeholderString` | 5＋5＋5 | `CandidateWindow/TDK4AppKit/*`、`LibVanguard/Session/InputSession.swift`、`Shared/PrefMgr_Core.swift` |
+| `NSColor.secondaryLabelColor` | 4 | `SettingsUI/SettingsCocoa/*` |
+
+即 10.9 **並非不可能**，而是要以 `if #available(macOS 10.10, *)` 或等效改寫換來；做與不做屬取捨、非硬限制。現行 `10.10` 之選擇因此是「未付這筆成本」的結果，而非 SDK 所迫。
+
+
+---
+
 ## 五、Swift 代際語法矩陣（兩套 toolchain 逐條實測）
 
 **Swift 5.10 拒收、6.x 接受**（皆為 SE-0449 等新語法）：

@@ -84,7 +84,7 @@
 | **工具鏈** | `LEGACY_TOOLCHAIN = $(HOME)/Library/Developer/Toolchains/swift-5.10.1-RELEASE.xctoolchain` | 只有 5.10 會挑到 `Package@swift-5.10.swift`（§三）；本機已存在此 toolchain |
 | **SDK** | `LEGACY_SDK = /Applications/Xcode-15.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.3.sdk` | **SDK 錯＝312 個掩蓋式錯誤**：`module '_c_standard_library_obsolete' requires feature 'found_incompatible_headers__check_search_paths'`、`unknown argument: '-target-arch-variant'`、`could not build module 'Darwin'`——沒有一條指向真正的病灶；正解是 Xcode 15 的 MacOSX13.3.sdk |
 | **scratch path** | 每個 package 一條：`.build/.legacy-<pkg>` | **共用＝兩份 manifest 的產物互踩**：5.10 的 SwiftPM 讀不懂新版 `.build/workspace-state.json`（v7），會警告 `unable to restore workspace state` 並**就地覆寫** |
-| **部署目標** | `LEGACY_TRIPLE = x86_64-apple-macosx10.10` | **10.9 不存在**：`Data` 本身標為 macOS 10.10 起可用，`-target x86_64-apple-macosx10.9` 建不出東西（連 `@backDeployed` 同名 shim 都平替不了——`Data` 是型別、不是可比對的符號） |
+| **部署目標** | `LEGACY_TRIPLE = x86_64-apple-macosx10.10` | **10.9 不存在**：`Data` 本身標為 macOS 10.10 起可用，`-target x86_64-apple-macosx10.9` 建不出東西（連 `@backDeployed` 同名 shim 都平替不了——`Data` 是型別、不是可比對的符號）。**2026-09-16 更正**：該「`Data` 說」經重測不成立（`Data()` 在 `-target …10.9` 下編譯連結皆 rc=0、產物記 `version 10.9`）；10.9 之真正阻礙是 5 支 AppKit API（`addChild` 等）共 57 筆 availability 錯誤、涉 7 檔，並非不可能、只是要付改寫成本。詳見 `Phase216_PostResearch.md` §四之更正。 |
 
 **更陰的一層（務必記住）**：`swift package dump-package` 在 SDK 27 下**照樣成功**，因為 manifest 不 `import Foundation`。故「manifest 載得動」**不足以**證明該 SDK 可用；P216 曾據此誤判一次。
 
@@ -1232,7 +1232,7 @@ error: 'vchewing_mainassembly4darwin': the target 'CSQLite3' in product 'Vanguar
 
 | 倉 | HEAD | 變動 |
 |---|---|---|
-| `vChewing-macOS` | `3ecbe770`（`MainAssembly // Swift 5.10 compilability.`） | 收工時 **clean**；2026-09-16 之追加 43 項（42 份封堵檔 ＋ `Packages/vChewing_MainAssembly4Darwin/Package@swift-5.10.swift`）**已隨該倉 rebase 入庫——現值 clean**（已複驗：該 manifest 之 lexicon 相依與兩支 plugin、以及 42 份封堵檔皆在 `HEAD` 之樹內） |
+| `vChewing-macOS` | `3ecbe770`（`MainAssembly // Swift 5.10 compilability.`；**其後再經一次 rebase，現值 `7553a687`，訊息不變**） | 收工時 **clean**；2026-09-16 之追加 43 項（42 份封堵檔 ＋ `Packages/vChewing_MainAssembly4Darwin/Package@swift-5.10.swift`）**已隨該倉 rebase 入庫——現值 clean**（已複驗：該 manifest 之 lexicon 相依與兩支 plugin、以及 42 份封堵檔皆在 `HEAD` 之樹內） |
 | `vChewing-LibVanguard` | `45bb0ac`（`LibVanguard // Patch unit test issues.`） | 收工時 **clean**；2026-09-16 之追加 4 項（聚合體與 `Deps/VanguardSwiftExtension` 之封堵檔各 2 份）**已隨 rebase 入庫——現值 clean** |
 | `vChewing-DevLogs` | `4429504`（`P217.`） | **clean**（`Research/Phase216_PostResearch.md`／`Research/Phase217_SOP.md`／`Reqs4LLM/Archive_P201-P300/Reqs_0211-0220.md` 三者已入庫） |
 
