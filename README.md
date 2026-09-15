@@ -41,8 +41,8 @@ vChewing-DevLogs/
 | 來源 | 授權 |
 |---|---|
 | `vChewing-LibVanguard` | LGPL-3.0-or-later（附 Swift 靜態連結例外） |
-| `vChewing-macOS`／`vChewing-OSX-Legacy` | MIT-NTL |
-| `vChewing-VanguardLexicon` | 3-Clause BSD（語料編譯器） |
+| `vChewing-macOS`／`vChewing-OSX-Legacy` | MulanPSLv2 |
+| `vChewing-VanguardLexicon` | MulanPSLv2（語料編譯器） |
 | `vChewing-Homebrew` | AGPL-3.0 |
 
 另有引自 ButKo BPMFVS 等第三方專案的片段，各依其原始授權，請洽各自上游。
