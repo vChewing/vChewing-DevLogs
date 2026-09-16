@@ -21,7 +21,7 @@ vChewing-DevLogs/
 
 ## 使用方式
 
-- **AI Agent**：開工前先讀 `KnowledgeMemo4LLM.md`，尤其其中的〈Response Pattern〉與 §12 的文件更新規則。新增記錄一律寫入**現行卷**（現為 `Archive_P201-P300/Reqs_0201-0210.md`，收 Phase 201~210）；已滿或已結案的歸檔卷不再增改，僅在本次 Phase 牽涉其所載記錄時，於該歸檔處補記一行簡述（何時／哪個 Phase／何種修改）。
+- **AI Agent**：開工前先讀 `KnowledgeMemo4LLM.md`，尤其其中的〈Response Pattern〉與 §12 的文件更新規則。新 Phase 之記錄一律寫入**現行卷**（現為 `Archive_P201-P300/Reqs_0221-0230.md`，收 Phase 221~230）；已滿或已結案的歸檔卷不再增改——**但對過往 Phase 之補記不在此限**：無論該卷是否已歸檔，補記一律補進**那個 Phase 自己的記錄內**，不得佔用其他 Phase（含現行卷）的記錄空間。
 - **人類讀者**：`DevReqsHistory.md` 是最快的入口（逐 Phase 一行摘要），要細節再進 `Reqs4LLM/` 或 `Research/`。
 
 ## 慣例
@@ -29,7 +29,7 @@ vChewing-DevLogs/
 - 本倉庫所有文件內的路徑一律以**工作區根**為錨（`vChewing-DevLogs/…`、`vChewing-LibVanguard/…`、`vChewing-macOS/…`）。
 - 文書以繁體中文（zh-Hant）撰寫。
 - 臨時檔案請放倉庫根目錄的 `tmp/` 或 `.tmp/`（已 gitignore），勿用系統的 `/tmp/`。
-- 分卷以「十年前綴 `0NN1`–`0NN0`」為界、每卷至多 10 個 Phase（如 `Reqs_0201-0210.md` 收 Phase 201~210），一律置於 `Archive_P{首 Phase 所屬百位段}/` 之下——該目錄同時容納**尚在續寫的現行卷**與已結案的歸檔卷。**同一區間內的新 Phase 續寫同一卷，不另立新卷**；卷滿或經事主裁定結案後，該卷不再增改。
+- 分卷以「十年前綴 `0NN1`–`0NN0`」為界、每卷至多 10 個 Phase（如 `Reqs_0201-0210.md` 收 Phase 201~210），一律置於 `Archive_P{首 Phase 所屬百位段}/` 之下——該目錄同時容納**尚在續寫的現行卷**與已結案的歸檔卷。**同一區間內的新 Phase 續寫同一卷，不另立新卷**；卷滿或經事主裁定結案後，該卷不再增改——**惟對該卷內某個 Phase 之補記仍逕補進那個 Phase 自己的記錄內**（見上〈使用方式〉）。
 - **「凍結」的定義**：`Archive_P…/` 桶要收齊該百位段的 **100 個 Phase** 才稱「凍結」；未滿 100 個 Phase 者只稱「已歸檔」，該桶仍會續收後續結案的分卷（現下的 `Archive_P201-P300/` 即屬後者）。
 
 ## 授權
