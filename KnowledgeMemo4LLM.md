@@ -302,6 +302,7 @@ Megrez 的繼任者，實現漢字組句動態規劃演算法。
 6. **Phase 46 後 `&` 字串編碼已從 Homa ↔ LMInstantiator 介面移除**。`Homa.Assembler` 現以 `[PossibleKey]` 儲存每個位置的可能讀音，並在 `assignNodes` 內部以笛卡爾積展開為精確 `[String]` 陣列後呼叫 `gramQuerier`。Typewriter 不再產生 `&` 字串；TrieKit `keysChopped:` 仍保留內部 `&` 處理供自身 partial-match 路徑使用，但 Homa 傳遞至 `LMInstantiator` 的皆為精確陣列。
 6. 下游測試 fixture 的 typeID 必須與 VanguardLexicon 建置器的實際 typeID 分配一致（Phase 09 教訓：`_punctuation_list` 等 `_` 前綴 key 在 production 為 typeID=4，fixture 誤標為 5/6 導致漏洞）。
 7. 不要再把 Phase 35 理解成「回退到下游 `FactoryTextMapLexicon`」。那條路徑只屬中間驗證；最終 source of truth 是 canonical `VanguardTrie.TextMapTrie` 與 `VanguardTrieProtocol.getEntryGroups(...)`。
+8. **`SwiftExtension` 符號之鏈接前提（2026-09-17，Phase 225 實錄）**：`SwiftExtension` 已析出為獨立 dynamic 產品 `VanguardSwiftExtension`，而 `libVanguard.dylib` 對它只有 `LC_LOAD_DYLIB`（**非 `LC_REEXPORT_DYLIB`**），且 SwiftPM 6.4 起之預設引擎（`swiftbuild`）**不代 dynamic 產品傳導其動態依賴**（舊 llbuild 引擎會代傳，故 6.3 世代不顯此坑）。故凡直接使用 SwiftExtension 符號之**靶**——**含只靠 `@_exported import SwiftExtension` 轉出、自身沒寫 import 者**——其 manifest 必須自行宣告 `.product(name: "VanguardSwiftExtension", package: "VanguardSwiftExtension")`（套件依賴之 `path:` 指 `../vChewing_OSNeutral_LibVanguard/Deps/VanguardSwiftExtension`），或至少鏈一個「已宣告它」的**靜態**產品（`IMKUtils`／`OSFrameworkImpl`／`InstallerAssembly4Darwin` 三家即已如此；靜態產品會把自身動態依賴往下帶）。只鏈 `Vanguard` 這一 dynamic 產品不足——`Jad_BookmarkManager` 即因此在 macOS CI 之 test 靶 link 期報 `Undefined symbols: SwiftExtension.mainSync…`（`mainSync` 於 `deinit` 內被呼叫）。另註：5.10 側之 `VanguardSwiftExtension` 是 `.static`，無此缺口。**本倉盤點（2026-09-17）**：全倉使用 SwiftExtension 符號者 15 家，屬「裸露形狀」（只鏈 dynamic 的 `Vanguard`、自身未宣告）者為 `Jad_BookmarkManager`／`vChewing_FolderMonitor`／`vChewing_UpdateSputnik` 三家——皆已補齊（6.4 ＋ 5.10 兩側各一檔）；其餘八家（`SettingsUI`／`MainAssembly4Darwin`／`Shared_DarwinImpl`／`CandidateWindow`／`NotifierUI`／`PopupCompositionBuffer`／`TooltipUI`／`Uninstaller`）係經**靜態**產品鏈獲得（`CandidateWindow` 為兩層：`Shared_DarwinImpl`→`IMKUtils`），惟這層安全性寫在**鄰居**的 manifest 內、不在自己的 manifest 內——改動上游依賴（尤其移除某家的產品宣告）前須重查此鏈。
 
 ---
 
@@ -341,6 +342,7 @@ Megrez 的繼任者，實現漢字組句動態規劃演算法。
   - **想在 macOS 27 之前的系統上以 6.4+ 編譯**（例如末代 Intel MacBook Pro 13-inch）：讓當前 shell 用上 6.4+ toolchain **是使用者自己的責任**。Swiftly 是可行路徑，但其 shell 環境配置繁瑣、且會把原本裝在系統根目錄的 FOSS toolchain 全部改裝進 user-space（macOS 26 上可用）；最高只能跑到 macOS 15 者，Swiftly 可能裝不進 user-space，只能以管理員權限手動安裝官方 `.dmg`／`.pkg` 到系統根目錄，並自行按需改 `makefile`。
   - **本倉不提供 `build640` 這類「鎖定 Swift 版本號」的建置入口**——Swift 每發一版就得回頭把所有 `makefile` 修一遍；建置入口一律以「當前 shell 的 `swift`」為準。
 - 出貨 runtime 目標 **macOS 12+**（`platforms: [.macOS(.v12)]`；5.10 legacy 側為 `x86_64-apple-macosx10.9` 之靜態 `.a`，其 toolchain／SDK／部署目標之三方配對見 §10.5）
+- **預設建置引擎自 Swift 6.4 起翻轉為 `swiftbuild`（Swift Build）**：產物佈局自 `.build/<triple>/<config>` 變為 `.build/out/{Products,Intermediates.noindex}/…`（`--build-system native` 可退回舊 llbuild 引擎，但已標 deprecated）。**兩個實務後果**：① 凡寫死舊佈局路徑之腳本／plugin 皆須復查；② 新引擎**不為 dynamic 產品傳導其動態依賴**（舊引擎會代傳）——見附錄二 A2.2 第 8 條。
 
 ### 10.2 建置指令
 
