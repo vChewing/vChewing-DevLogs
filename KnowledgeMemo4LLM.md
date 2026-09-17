@@ -174,7 +174,7 @@ Megrez 的繼任者，實現漢字組句動態規劃演算法。
 整合多種辭典來源，向上層提供統一查詢介面。**本節原名 `LexiconKit`，其對位物自 Phase 213 起於 `vChewing-LibVanguard` 亦已更名為 `LexiconAssembly`（原 `Sources/_Modules/LexiconKit/` 整目錄退場）。`vChewing-macOS` 側早於 Phase 202 更名、Phase 210 併入 `Packages/vChewing_OSNeutral_LibVanguard`。**
 
 - **`LXAssembly.LXFacade`**：辭典查詢門面（Phase 201~204 由 `LMInstantiator`／`LMI` 更名而來）。原 LibVanguard 的 `VanguardTrie.TrieHub`（Trie 資料庫中樞，唯一資料來源為 Vanguard Pragma TextMap 的 `updateTrieFromTextMapFile`）**已於 Phase 213 隨舊佈局退場**，其角色由 `LXFacade` ＋下述來源抽象承接。唯一公開查詢面為 `LXAssembly.LXQuerier`（Phase 201~204 之 API 壓縮）。
-- **`LXAssembly.LXPerceptor`**：使用者習慣洞察器（POM），基於 Ngram 的行為追蹤、時間衰減三次曲線。原 LibVanguard 側名為 `Perceptor`。
+- **`LXAssembly.LXPerceptor`**：使用者習慣洞察器（POM），基於 Ngram 的行為追蹤、時間衰減三次曲線。原 LibVanguard 側名為 `Perceptor`。其持久化層 `LXAssembly.PerceptionPersistor` 的鎖恆為**葉鎖**——取鎖期間不得呼叫任何回呼，因為 `LXPerceptor` 會在持自有鎖時呼叫該層的 `markKeyForUpsert(_:)`／`markKeyForRemoval(_:)`，兩者互相嵌套即成取鎖順序倒置的死鎖（2026-09-17 修正，回歸斷言見 `Tests/LexiconAssemblyTests/POMLockDisciplineTests.swift`）。
 - **`LXAssembly.LXPlainBopomofo`**：倚天中文 DOS 注音表（Phase 201~204 由 `Lexicon.LMPlainBPMF` 更名）。
 - **`LXAssembly.LexiconGramSupplierProtocol`**：統一所有辭典來源的元圖供應協定。
 - **`LXAssembly.LXGramSupplyHub`／`LXFactoryGramSupplier`**：多來源中樞與「把原廠辭典包成可掛載來源」的轉接器（Phase 212 落地，兩倉同源）。另有合流 API（`LXAssembly.GramConcatFlags`／`concatGramQueryResults`／`concatGramAvailabilityCheckResults`／`makeGramIdentityHash`）。宿主或測試可經 `LXFacade.mountGramSupplier(_:)`（或 `lxQuerier` 的同名方法）掛載任意來源，其元圖會併入 `unigramsFor` 的一般查詢結果、並被 `hasUnigramsForFast` 承認。**兩倉於此完全同源**（`vChewing-macOS` 為正本、`vChewing-OSX-legacy` 為減去模組 import 與 `nonisolated` 的同構副本；legacy 不承擔單元測試）；LibVanguard 自 Phase 213 起為 macOS 的逐位元組複製，故 Phase 212 所記之「四項刻意差異（命名空間／元圖型別／`makeGramIdentityHash` 之可見性／`Homa.Gram.init(_ trieGram:)` 橋接）」**已不再存在**。
