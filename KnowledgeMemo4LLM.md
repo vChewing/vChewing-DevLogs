@@ -2,7 +2,7 @@
 
 - 本文檔供 AI Agent 在每次開工前迅速了解專案全貌。
 - **FeatureRequest（FR）目錄註記**：`vChewing-DevLogs/PendingFeatureReqs/` 存放 FeatureRequest 類 PreResearch 文件（現含 `FR608-PreResearch.md`）。該目錄**僅在被要求處理時才處理**——除非事主明確指示，否則不得主動動工、不納入任何 Phase 排程、不預先分析其內容。
-- **Reqs4LLM 分卷歸檔註記**：`vChewing-DevLogs/Reqs4LLM/` 之下，分卷以「至多 10 個 Phase」為單位；現行卷為 `vChewing-DevLogs/Reqs4LLM/Archive_P201-P300/Reqs_0221-0230.md`（收 Phase 221~230；同目錄的 `Reqs_0211-0220.md` 已滿、收 Phase 211~220），`vChewing-DevLogs/Reqs4LLM/Reqs_Other_Pending_Phases.md` 為不隨分卷歸檔的待定事項暫存。一卷寫滿、或經事主裁定結案後，即依其 Phase 區間移入 `vChewing-DevLogs/Reqs4LLM/Archive_P{首 Phase 所屬百位段}/`（既有：`Archive_P001-P100/`〔Phase 01~100〕、`Archive_P101-P200/`〔Phase 101~200〕、`Archive_P201-P300/`〔Phase 201~230〕）。**（archive 桶的「凍結」僅指該百位段的 100 個 Phase 已收齊；未滿 100 個 Phase 者只稱「已歸檔」、仍會續收後續結案的分卷——現下的 `Archive_P201-P300/` 即屬此態。）已滿或已結案的歸檔卷不再增改，新 Phase 之記錄一律寫入現行卷；惟對過往 Phase 之補記不在此限——無論該卷是否已歸檔，補記一律補進那個 Phase 自己的記錄內，不得佔用其他 Phase（含現行卷）的記錄空間。** 本文件群內所有路徑一律以**工作區根**為錨（`vChewing-DevLogs/…`、`vChewing-LibVanguard/…`、`vChewing-macOS/…` 等）。
+- **Reqs4LLM 分卷歸檔註記**：`vChewing-DevLogs/Reqs4LLM/` 之下，分卷以「至多 10 個 Phase」為單位。**現行卷一律現算、不以硬寫之檔名記載**：取 `Reqs4LLM/Archive_P*/` 之下、檔名匹配 `Reqs_0NN1-0NN0.md` 者之**標號最大**的一卷，其內 `^# Phase ` 標題數**未達 10** 者即為現行卷（含 0 個 Phase 之空卷）；若該末卷已滿 10 個 Phase、或經事主裁定結案，則現行卷為其後繼一卷（`Reqs_0(NN+1)1-0(NN+1)0.md`，尚未建立者於其所屬百位段目錄新建之）。現算之兩道手續：`ls -1 vChewing-DevLogs/Reqs4LLM/Archive_P*/Reqs_[0-9]*.md | sort | tail -1` 取末卷、`grep -c '^# Phase ' <末卷>` 數其 Phase 數。`vChewing-DevLogs/Reqs4LLM/Reqs_Other_Pending_Phases.md` 為不隨分卷歸檔的待定事項暫存。卷之所在目錄一律取「該卷首 Phase 所屬之百位段」：`Archive_P{百位段下界}-P{百位段上界}/`（如首 Phase 231 ⇒ `Archive_P201-P300/`；目錄不存在即新建）。故卷之落點與歸檔位置皆由卷名自身決定、無須回改本註記；既有三桶為 `Archive_P001-P100/`、`Archive_P101-P200/`、`Archive_P201-P300/`。**（archive 桶的「凍結」僅指該百位段的 100 個 Phase 已收齊；未滿 100 個 Phase 者只稱「已歸檔」、仍會續收後續結案的分卷——現下的 `Archive_P201-P300/` 即屬此態。）已滿或已結案的歸檔卷不再增改，新 Phase 之記錄一律寫入現行卷；惟對過往 Phase 之補記不在此限——無論該卷是否已歸檔，補記一律補進那個 Phase 自己的記錄內，不得佔用其他 Phase（含現行卷）的記錄空間。** 本文件群內所有路徑一律以**工作區根**為錨（`vChewing-DevLogs/…`、`vChewing-LibVanguard/…`、`vChewing-macOS/…` 等）。
 - **授權註記**：本倉庫自身內容以 **LGPL-3.0-or-later** 授權，詳見 `COPYING` 與 `LICENSES/preferred/LGPL-3.0-or-later`。倉內**引用**的程式碼／資料仍依其來源授權、不受本倉庫授權影響（`vChewing-LibVanguard` LGPL-3.0-or-later〔附 Swift 靜態連結例外〕、`vChewing-macOS`／`vChewing-OSX-Legacy`（自 2026-09-13 起，**閉包以外之一切自研內容已換軌為 `MulanPSL-2.0`**，兩倉自此不再有 MIT-NTL；**以 `LibVanguard`（原 `OSNeutralAssembly`）為終末點之 8 個 SPM package 則為 LGPL-3.0-or-later**——`LibVanguard`／`LexiconAssembly`〔內含 `TrieKit`；`TrieKit` 係套件與 target 名，與本倉 `Sources/` 的 `LX_` 檔名前綴無關〕／`Homa`／`Shared`／`Tekkon`／`BrailleSputnik`／`BPMFVS`／`SwiftExtension`〔惟 `SwiftExtension` 為 `MulanPSL-2.0`〕；其遞移相依閉包以外者一律為 `MulanPSL-2.0`）、`vChewing-VanguardLexicon` `MulanPSL-2.0`、`vChewing-Homebrew` AGPL-3.0，另有 Megrez／ButKo BPMFVS／KeyKey／McBopomofo 等第三方片段）。清單見 `README.md`。
 - 最後更新：2026-09-18 // 這一行只寫日期，不用贅述 DevReqHistory 裡面的那種記載格式。
 - AI Agent 得特別注意本文所提到的「Response Pattern」。
@@ -75,7 +75,7 @@ vChewing-LibVanguard/
 > vChewing-DevLogs/
 > ├── KnowledgeMemo4LLM.md               # 本文件
 > ├── DevReqsHistory.md                  # 開發階段歷史
-> ├── Reqs4LLM/                          # Phase 需求文件（現行卷見 Archive_P201-P300/）
+> ├── Reqs4LLM/                          # Phase 需求文件（分卷與現行卷之判定見 §12.2）
 > ├── Research/                          # 各 Phase 研究報告
 > └── PendingFeatureReqs/                # FeatureRequest 類 PreResearch
 > ```
@@ -500,7 +500,7 @@ make clean510               # 清兩條 scratch
 
 | 檔案 | 更新時機 | 內容格式 |
 |------|---------|----------|
-| **vChewing-DevLogs/Reqs4LLM/Archive_P201-P300/Reqs_0221-0230.md**（現行卷） | 每個 Phase 必須 | `# Phase XX` 標題 + 規格說明 + `## Phase XX 實作結果` 小節（歸檔卷不再增改；惟對過往 Phase 之補記一律補進該 Phase 自己的記錄內——無論該卷是否已歸檔，回填規則見 §12.5） |
+| **vChewing-DevLogs/Reqs4LLM/Archive_P{首 Phase 所屬百位段}/Reqs_0NN1-0NN0.md**（現行卷；檔名現算，判定式見文首〈Reqs4LLM 分卷歸檔註記〉） | 每個 Phase 必須 | `# Phase XX` 標題 + `Assignee:` 行（**Model ＋ Harness** 兩者兼備，見 §12.6）＋ 規格說明 + `## Phase XX 實作結果` 小節（歸檔卷不再增改；惟對過往 Phase 之補記一律補進該 Phase 自己的記錄內——無論該卷是否已歸檔，回填規則見 §12.5） |
 | **vChewing-DevLogs/DevReqsHistory.md** | 每個 Phase 必須 | 追加一行 `\| Phase XX \| 簡短描述 \|` |
 | **KnowledgeMemo4LLM.md** | 每個 Phase 必須 | 更新 `最後更新` 標記，並按需要補上近期 phase 摘要或修正過時指引 |
 | **UserGuide (4語言)** | 影響使用者操作時 | 在對應章節添加功能說明（鍵盤熱鍵、滑鼠操作等） |
@@ -539,7 +539,7 @@ make clean510               # 清兩條 scratch
 
 | 檔案 | 更新內容 | 注意事項 |
 |------|---------|---------|
-| vChewing-DevLogs/Reqs4LLM/Archive_P201-P300/Reqs_0221-0230.md（現行卷） | 新增 Phase XX 規格與實作備忘錄 | 一律寫入**現行卷**；**歸檔卷**（已滿 10 個 Phase、或經事主裁定結案者）不再增改。分卷以「十年前綴 `0NN1`–`0NN0`」為界、每卷至多 10 個 Phase（如 `Reqs_0201-0210.md` 收 Phase 201~210）；**同一區間內的新 Phase 續寫同一卷，不另立新卷**。該區間寫滿或結案後始自立為一卷，並置於 `Archive_P{首 Phase 所屬百位段}/`（現行卷尚未寫滿，故雖置於 `Archive_P201-P300/` 內仍屬現行卷）。**對過往 Phase 之補記不寫入現行卷**：無論該 Phase 所屬之卷是否已歸檔，補記一律逕補進**那個 Phase 自己的記錄內**，不得佔用其他 Phase 的記錄空間。 |
+| vChewing-DevLogs/Reqs4LLM/Archive_P{首 Phase 所屬百位段}/Reqs_0NN1-0NN0.md（現行卷；檔名現算） | 新增 Phase XX 規格與實作備忘錄 | 一律寫入**現行卷**；**歸檔卷**（已滿 10 個 Phase、或經事主裁定結案者）不再增改。分卷以「十年前綴 `0NN1`–`0NN0`」為界、每卷至多 10 個 Phase（如 `Reqs_0201-0210.md` 收 Phase 201~210）；**同一區間內的新 Phase 續寫同一卷，不另立新卷**。該區間寫滿或結案後始自立為一卷，並置於 `Archive_P{首 Phase 所屬百位段}/`（歸檔桶與「卷是否已滿」無關：現行卷雖置於 `Archive_P…/` 之內仍屬現行卷）。**對過往 Phase 之補記不寫入現行卷**：無論該 Phase 所屬之卷是否已歸檔，補記一律逕補進**那個 Phase 自己的記錄內**，不得佔用其他 Phase 的記錄空間。 |
 | vChewing-DevLogs/KnowledgeMemo4LLM.md | 根據專案實際情況更新內容（如適用） | 參考既往記錄的文書風格。 |
 | vChewing-DevLogs/DevReqsHistory.md | 新增 Phase XX 到開發階段歷史 | 參考既往記錄的文書風格。 |
 

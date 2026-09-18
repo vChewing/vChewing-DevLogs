@@ -307,7 +307,7 @@ guard containsHalfWidthAlphanumerical || (newToneOne != " " && contains(" ")) el
    `temporaryMap` 大量就地加詞情境。
 6. **量測配置**：`swift test -c release`（`-O`）；Debug（`-Onone`）絕對值會顯著更差，不可外推。
 7. **單一 seed**：`mean` 受離群樣本影響大，**請以 p50／p95 為準**；病理語料為刻意構造之上界，非現實分佈。
-8. **未 commit**：本 phase 之變更待事主 finalize。
+8. **未 commit**：本 phase 之變更待事主 finalize。（**追記（2026-09-20）**：其後已入庫——`vChewing-LibVanguard` **`ddfc1a5`**、`vChewing-macOS` **`f514b51b`**，兩倉同訊息 `LXAssembly // LXCoreEX: Don't conv readings if unnecessary.`，各 2 檔、＋60／−0；見 `vChewing-DevLogs/Reqs4LLM/Archive_P201-P300/Reqs_0221-0230.md` Phase 230。）
 
 ---
 
