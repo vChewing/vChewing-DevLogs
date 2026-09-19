@@ -14,14 +14,14 @@ vChewing-DevLogs/
 │   ├── Reqs_Other_Pending_Phases.md
 │   ├── Archive_P001-P100/     # 已凍結（Phase 01~100 收齊）
 │   ├── Archive_P101-P200/     # 已凍結（Phase 101~200 收齊）
-│   └── Archive_P201-P300/     # 未凍結；內含現行卷 Reqs_0201-0210.md（Phase 201~210）
+│   └── Archive_P201-P300/     # 未凍結；內含現行卷（檔名現算，見 KnowledgeMemo4LLM.md 文首〈Reqs4LLM 分卷歸檔註記〉）
 ├── Research/                  # 各 Phase 的研究報告
 └── PendingFeatureReqs/        # FeatureRequest 類 PreResearch
 ```
 
 ## 使用方式
 
-- **AI Agent**：開工前先讀 `KnowledgeMemo4LLM.md`，尤其其中的〈Response Pattern〉與 §12 的文件更新規則。新 Phase 之記錄一律寫入**現行卷**（現為 `Archive_P201-P300/Reqs_0221-0230.md`，收 Phase 221~230）；已滿或已結案的歸檔卷不再增改——**但對過往 Phase 之補記不在此限**：無論該卷是否已歸檔，補記一律補進**那個 Phase 自己的記錄內**，不得佔用其他 Phase（含現行卷）的記錄空間。
+- **AI Agent**：開工前先讀 `KnowledgeMemo4LLM.md`，尤其其中的〈Response Pattern〉與 §12 的文件更新規則。新 Phase 之記錄一律寫入**現行卷**（**檔名現算、不以硬寫之檔名記載**：取 `Reqs4LLM/Archive_P*/` 之下標號最大的 `Reqs_0NN1-0NN0.md`，其 `^# Phase ` 標題數未達 10 者即為現行卷；判定式見 `KnowledgeMemo4LLM.md` 文首〈Reqs4LLM 分卷歸檔註記〉）；已滿或已結案的歸檔卷不再增改——**但對過往 Phase 之補記不在此限**：無論該卷是否已歸檔，補記一律補進**那個 Phase 自己的記錄內**，不得佔用其他 Phase（含現行卷）的記錄空間。
 - **人類讀者**：`DevReqsHistory.md` 是最快的入口（逐 Phase 一行摘要），要細節再進 `Reqs4LLM/` 或 `Research/`。
 
 ## 慣例
