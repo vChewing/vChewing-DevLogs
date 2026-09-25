@@ -41,6 +41,12 @@
 > 另：本研究隨手將 `~/.moon/bin` 併入 bash（`~/.bash_profile` ＋ `~/.bashrc`，帶守衛）與 nushell
 > （`~/.config/nushell/env.nu`）；zsh 由安裝程式自理。
 >
+> ⑫ 同日第十二輪——事主令「驗」（補驗第十一輪未及之另一半：五支 `tools/*.mjs` 在 `jsc` 下實跑）。
+> **結果：全綠**——五支工具之輸出與 node 相同、`dist/` 之 **7 檔產物逐位元組相同**；並驗出**六項真缺口**
+> （`Buffer.byteLength`、`path.relative` 之完整實作、`fs.readdirSync`／`statSync` 無對位、
+> `child_process` 無對位、`vm` 之 context 隔離無對位、`process.argv` 形狀）與**一項方法學教訓**
+> （去模組化不可攤平，否則兩個模組之頂層同名 `const` 相撞）。新增 §7.10.1。
+>
 > ⑪ 同日第十一輪——事主提出收束：「你看目前已有的 build chain 是否可以脫離對 NODE 的依賴、
 > 只要求 devenv 事先安裝 tsc？」**實測後判定該收束成立**，並新增 **§7.10 庚：最小改動案**——
 > 關鍵發現是 **macOS 內建 `jsc`**（`JavaScriptCore.framework/…/Helpers/jsc`，具 `readFile`／
@@ -1268,6 +1274,71 @@ real 0m0.138s
 
 **定位**：**庚案是「只要求 devenv 安裝 `tsc`」這個目標之最廉價解**——不動語言、不動 78 支測試、
 不動 `src/`，只換兩樣外部物：宿主與 `tsc` 之來源。事主之收束**成立**。
+
+##### 7.10.0 施行現況（2026-09-25：**庚案已落地為 Phase 246**）
+
+事主於第十二輪之後指示：「新任務：免除對 node 的依賴、且現階段不考慮 windows / linux 下的編譯。
+這個作為 Phase 246 任務請落實。」**庚案已照此施行並驗收完畢**；其實作與本節之構想有兩處出入，
+記此以免讀者以本文為施工依據時失準：
+
+1. **宿主由 `jsc` 改為 JXA**（`osascript -l JavaScript`）。§7.10.1 所量之 `jsc` 雖較快
+   （78 支測試 0.138 s），但缺三樣本鏈需要之物：**無目錄列舉**、**無子行程能力**（讀 `.plist`）、
+   **無 argv**。JXA 三者皆備、啟動僅 0.02–0.03 s。故 §7.10.1 表列之第 3、4 兩項「非忠實」缺口
+   **在施行中並未出現**——JXA 以 `NSFileManager` 列目錄、以 `NSDictionary` 直讀 plist，
+   連 `plutil` 子行程都不必（惟 `execFileSync('plutil', …)` 之呼叫介面仍予保留，故工具原始碼不變）；
+   第 5 項（`vm` 之 context 隔離）**仍然存在**，以「全域求值後回填」代償。
+2. **五支工具改為 CommonJS**（`.mjs` → `.js`），而非於載入期做原始碼轉換——此為
+   `require.main === module` 之自然落點，且使工具在 node 上仍可執行（便於 A/B 對照）。
+
+**施行之驗收**：`make audit` rc=0（暖機 3.98 s，node 期 2.882 s）；**於 PATH 完全無 node 時 rc=0**；
+**產物 7／7 逐位元組相同**；五支工具輸出與 node 全同；78／78 測試。詳見
+`vChewing-DevLogs/Reqs4LLM/Archive_P201-P300/Reqs_0241-0250.md` 之 Phase 246。
+
+### 7.10.1 複驗：五支 `tools/*.mjs` 在 `jsc` 下實跑（第十二輪；事主令「驗」）
+
+第十一輪只驗了「測試宿主」那一半；本輪補驗另一半——**把五支工具真的餵給 `jsc` 跑**。
+作法：不動倉內任何檔案，於暫存區做「ESM → CommonJS」之機械轉換（此即正式遷移所需之編輯），
+再以 shim 提供 node 之 API 子集。**結果**：
+
+| 工具 | node rc | jsc rc | 輸出 |
+|---|---|---|---|
+| `build.mjs`（產物） | — | **0** | 見下 |
+| `es5guard.mjs dist/core.js` | 0 | **0** | **相同** |
+| `fixtures.mjs --check` | 0 | **0** | **相同**（5 份 `same`） |
+| `settings-surface.mjs --check` | 0 | **0** | **相同**（107 鍵、無漂移） |
+| `target-version.mjs --check` | 0 | **0** | **相同**（版本一致） |
+
+**產物比對（時戳正規化後）：`dist/` 之 7 檔全部逐位元組相同**——
+`app.js` 335,995 B、`assistant.html` 349,299 B、`core.js` 284,639 B、`index.html` 813 B、
+`metadata.js` 187,836 B、`userdef-metadata.json` 232,766 B（皆由 **`jsc` 跑 `build.mjs`** 產出後比對）。
+**即：整條建置鏈——工具與測試兩半——皆可在 macOS 內建之 `jsc` 上跑出與 node 完全相同之結果。**
+
+**本輪驗出之六項真缺口（皆為 node 專有之物，`jsc` 無對位）**：
+
+| # | 缺口 | 處置 | 性質 |
+|---|---|---|---|
+| 1 | **`Buffer.byteLength`** | 自行以 UTF-8 規則推算（BMP＋代理對） | **忠實**（已對位） |
+| 2 | **`path.relative`** | 鬚完整實作——天真版（只處理「to 在 from 之下」）令 `settings-surface` 對**倉根以外**之掃描目錄求相對路徑時失真，**當場造成假漂移** | **忠實**（已對位） |
+| 3 | **`fs.readdirSync`／`statSync`** | **`jsc` 完全沒有目錄 API**（`readFile(dir)` 直接拋錯、全域無 `readDir`／`stat` 一類）⇒ 目錄清單須**由外部供給** | ⚠️ **非忠實** |
+| 4 | **`child_process.execFileSync('plutil', …)`** | `jsc` 無子行程能力 ⇒ plist 之 JSON 須**由外部供給** | ⚠️ **非忠實** |
+| 5 | **`vm.createContext`／`runInContext` 之 context 隔離** | 無對位 ⇒ 以「於全域求值後回填 `VCA`／`VCA_METADATA`」代償（僅因各工具自成一行程、且該工具只窺看這兩個名字才成立） | ⚠️ **非忠實** |
+| 6 | **`process.argv` 之形狀** | 必須是 `[jsc, <工具路徑>, …args]`。**本輪曾少放一格**，致各工具之 `invokedPath.endsWith(…)` 守衛不通過、`main()` **靜默不執行**（輸出空、rc=0）——此為最陰險之坑 | **忠實**（已對位） |
+
+另有兩項須記：① **`jsc` 之 `print` 恆帶換行** ⇒ 輸出須緩衝後整批 flush；
+② **`process.exit(n)` 無對位**——`quit(n)` 不設 rc（實測 `quit(3)` 之 rc 仍為 0），
+失敗須以**未捕捉例外**收場（實測 rc＝3）。
+
+**一項方法學教訓（值得記下）**：本輪之第一版把 ESM **攤平到同一全域**（只刪 `import`／`export`），
+結果 `build.mjs` 與 `es5guard.mjs` **各有頂層 `const invokedPath`**，在 node 裡是各自獨立的模組範疇、
+攤平後即撞名（`SyntaxError: Can't create duplicate variable`）。
+**故「去模組化」不可只刪 import 行——必須保留模組範疇**（本輪改以 CommonJS 包裹函式後通過）。
+
+**如何消掉那三項「非忠實」**：改用 **JXA（`osascript -l JavaScript`）** 為工具之宿主——
+本研究已驗其 ① 能以 `NSFileManager.contentsOfDirectoryAtPathError` **列目錄**（實測列出 tools/ 之五檔）、
+② 能以 `NSDictionary.dictionaryWithContentsOfFile` **直讀 plist**（實測得 `4.8.4`／`4840`，
+**連 `plutil` 子行程都不必**）。惟**未在 JXA 上實跑那五支工具**（附錄 E）。
+另一條路是**由 Makefile 供給**目錄清單與 plist 值（`make` 本就能 `ls`／`plutil`），
+代價是工具不再自足。
 
 ---
 
