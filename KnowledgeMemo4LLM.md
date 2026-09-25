@@ -602,4 +602,7 @@ make clean510               # 清兩條 scratch
 
 ---
 
+- **設定面板之兩側命名與「Section」之形制（2026-09-25，Phase 247／248 實查）**：事主口語之 **「SessionUI」／「SessionCocoa」**即本倉 `vChewing_SettingsUI` 套件內之 **SwiftUI 面板**（`Sources/SettingsUI/SettingsUI/VwrSettingsPane*.swift`）與 **AppKit 面板**（`Sources/SettingsUI/SettingsCocoa/VwrSettingsPaneCocoa*.swift`）；全倉並無 `SessionCocoa` 一字，phase 文書見此用語時應據此對位。同一個「Section」在兩側形制不同：SwiftUI 側是 `Section { … }`（語言構造）；AppKit 側是 `NSStackView.buildSection(width:) { … }?.boxed()`（`vChewing_OSFrameworkImpl` 之工廠函式 ＋ 外框，`withDividers: false` 即令同段各列之間不留分隔線）。**分段即兩側唯一之視覺分群手段**——本二面板之各段皆無標題（原始碼內之 `// MARK: (header: Text("…"))` 是**註解**、非實作），故一個 `Section` 就是使用者在畫面上看到的一個帶框方塊。
+- **`make lintFormatUncommitted` 只涵蓋「tracked 且未 commit」之 Swift 檔（2026-09-25，Phase 247 實錄）**：**新建而尚未 `git add` 之檔不在其列**（其以 `git diff --name-only HEAD` 取檔）；故新增檔案後須先 `git add` 再跑，或對該檔單獨跑 `swiftlint lint --fix --autocorrect --config .swiftlint.yml <檔>` ＋ `swiftformat --swiftversion 5.5 --indent 2 <檔>`，否則新檔會漏格式化。實錄：P247 之新檔 `AssistantLauncher.swift` 即因此漏跑，事後補跑（僅移除一個多餘之 `// MARK: Public`）、並以 `--amend` 就地補入同一筆尚未推送之 commit。
+
 > ⚠️ **注意**: 本文檔需要定期更新以反映最新程式碼狀態。如有發現過期內容，請及時修正。
