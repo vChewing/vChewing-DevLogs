@@ -7,9 +7,29 @@ Python 3 單檔（只用標準庫），可直接執行。
 |---|---|---|
 | `check_integrity.py` | **截斷絆線**：比對工作區與 `HEAD` 之每一份受版控檔案大小，凡「HEAD 有內容而工作區為 0 bytes」即 CRITICAL | `python3 check_integrity.py` |
 | `safepatch.py` | **安全改檔**：read → 逐字替換 → 原子寫入，附三道守衛（錨點次數、非空結果、不得大幅縮減） | `python3 safepatch.py --file X --old-file /tmp/old --new-file /tmp/new` |
+| `housestyle_audit.py` | **記述預算稽核**：量 Reqs 卷各 Phase 篇之字數與儀式重複、`DevReqsHistory` 各列長度、`KnowledgeMemo` 開頭部是否混入逐 Phase 記述 | `python3 housestyle_audit.py`（交差前跑一次） |
 
 工作區根部另有同名之 symlink（`_MainWorkspace/check_integrity.py`、
 `_MainWorkspace/safepatch.py`），與既有之 `lint_zhtw.*` 同居，故在根部直接跑即可。
+
+## `housestyle_audit.py`：記述預算
+
+```sh
+python3 housestyle_audit.py            # 全倉；列出超標項與統計（exit 1 表有超標）
+python3 housestyle_audit.py --since 250
+python3 housestyle_audit.py --quiet    # 只在有超標時出聲
+python3 housestyle_audit.py --json
+python3 housestyle_audit.py --self-test
+```
+
+**量尺**（規則本體見 `KnowledgeMemo4LLM.md` §12.7；改規則請同步改本檔之 `BUDGETS`）：
+
+- **Reqs 卷之 Phase 篇**：修補型 ≤ 2,500／標準 ≤ 5,000／大型 ≤ 8,000 chars。
+- **`DevReqsHistory.md` 各列** ≤ 300 chars（該檔是索引，非第二份正本）。
+- **`KnowledgeMemo4LLM.md` 開頭部不得有逐 Phase 記述**（該檔只收「現況」與「施工注意事項」）。
+- **儀式小節**（§8.0.1 收尾回檢／兩倉 byte-sync／測試基線／變異測試）同一 phase 內至多一次。
+
+**適用起點＝P262**（§12.7 訂於 2026-09-27、即 P261 完工之後；之前者列為 `legacy（不判）`，`--all-history` 可改為嚴苛模式）。**它不判內容好壞**——只報「誰超預算、超在哪一份文件」。超標並非一律要改：**超標者須在交差回報中寫明一行理由**。
 
 ## 為何要有這兩支
 

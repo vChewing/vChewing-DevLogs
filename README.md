@@ -21,6 +21,7 @@ vChewing-DevLogs/
 
 ## 使用方式
 
+- **文書之寫作紀律（House Style）**：見 `KnowledgeMemo4LLM.md` §12.7——**一處一寫**（durable 事實入 `KnowledgeMemo4LLM.md`、本 Phase 之證據入 Reqs 卷、索引入 `DevReqsHistory.md`、長篇推導入 `Research/`），並有**篇幅預算**與**固定骨架**。交差前跑一次 `python3 Tools/housestyle_audit.py` 檢核（超標須在回報中寫明理由）。**`Research/` 各檔不在此限。**
 - **AI Agent**：開工前先讀 `KnowledgeMemo4LLM.md`，尤其其中的〈Response Pattern〉與 §12 的文件更新規則。新 Phase 之記錄一律寫入**現行卷**（**檔名現算、不以硬寫之檔名記載**：取 `Reqs4LLM/Archive_P*/` 之下標號最大的 `Reqs_0NN1-0NN0.md`，其 `^# Phase ` 標題數未達 10 者即為現行卷；判定式見 `KnowledgeMemo4LLM.md` 文首〈Reqs4LLM 分卷歸檔註記〉）；已滿或已結案的歸檔卷不再增改——**但對過往 Phase 之補記不在此限**：無論該卷是否已歸檔，補記一律補進**那個 Phase 自己的記錄內**，不得佔用其他 Phase（含現行卷）的記錄空間。
 - **人類讀者**：`DevReqsHistory.md` 是最快的入口（逐 Phase 一行摘要），要細節再進 `Reqs4LLM/` 或 `Research/`。
 
