@@ -30,6 +30,7 @@
 > - **v22（2026-09-26，**Phase 259 · Task 5 完工回檢＝術語統一 ＋ 助手之三項來源裁定**）**：**① 術語統一（事主裁定）**：「狂注 → **注音狂打／注音狂打ち／Furious Zhuyin**；狂拼 → **拼音狂打／弁音狂打ち／Furious Pinyin**。**此前的功能稱謂正式停用。**」⇒ **§1.2 全面改版**（新表 ＋ 停用範圍之明示）、文首〈用詞〉行隨之改寫；**四語系 `.strings` 之六條 × 四語系一字不留舊稱謂**（行內模式提示 ×2、兩鍵之 `shortTitle`、以及兩條 `description` 內之舊稱謂引用），並新增**術語護欄**——助手之 `metadata.test.js` 斷言「舊稱謂不得出現於任何標籤」＋「新稱謂須在位」（後設資料係由 `.strings` 導出，故此護欄即四語系之固化物）。**歷史記錄保留舊稱謂**（含事主原文之逐字引用，改之即偽造引文）。**② 助手之三項來源裁定**：**CIN** 來源無須調整（維持不指名）；**newbie**（全新使用者）現階段**刻意停用**狂打特性 ⇒ 為此新增 **`ORIGIN_VETOED_KEYS`（來源級否決）**——因本檔之推薦序為「打字方式 ＞ 來源」，而「來源 × **任何**打字方式」之合取條件無從以既有兩表表達（`4Pinyin` 之一般規則為「拼音方案刻意開啟」，而 newbie 須否決之）；其固化物為 `pinyin-newbie.json` 之 `FuriousTypingEnabled4Pinyin` **true → false**；**GoingIME** 係自然輸入法（主推**許氏**注音佈局），**並非**兼有兩派 ⇒ 歸注音系為正解、**P259 記錄中「實務上兼有兩派」之記述為誤（已於 P259 更正）**。**驗證**：助手 `make test` **81 支／全過**（79 → 81）、`make audit` exit 0（surface 108 無漂移）、`SettingsUI` 19 支／4 套／0 失敗；**I2 空操作**。**受修訂之小節**：**§1.2（全面改版）**、文首〈用詞〉、**§8.10.5（新增）**、§9、§11（#21／#22 結案）。
 > - **v23（2026-09-26，**Phase 258 · Task 3 完工回檢＝中英混合輸入回退對注音狂打之否決**）**：事主實機回報「**注音狂打開啟之後，注音之中英混合輸入回退失效**」。**根因**：`typingMode`（P254 之閘門收束）之判定**只問狂打開關**，回退旗標不在其視野內 ⇒ ASCII 按鍵悉數派給狂打的打字機、`MixedAlphanumericalTypewriter` **連建構都沒發生**——「回退失效」之實情是「回退整條路徑不存在」。**裁定**（事主）：「如果中英文輸入回退有被啟用的話，哪怕注音狂打模式開關有開啟，注音狂打模式也得被 InputHandler／Typewriter 認為是關閉的。」**實作**：否決置於 `typingMode` 之**注音臂**（`&& !prefs.mixedAlphanumericalEnabled`，生產碼 1 行）⇒ 全部狂打閘門、`handleComposition` 之分派、行內模式提示**自動**跟上且按鍵自動改走 `MixedAlphanumericalTypewriter`。**★ 施工查得**：模式判定在 `LexiconAssembly/LXFacade.syncPrefs()` 另有一份**就地複製品**（注音文抑制旗標之語意即「狂打確實生效中」），須同步補同一維度——否則出現「模式非狂打、抑制卻仍開」之**第五態**，違反 P257 之四態裁定。**拼音側刻意不否決**（回退本即注音鍵盤專屬；連帶否決會令注音時期遺留該偏好、其後改用拼音者無故失去狂拼）。**靶**：＋IH168（旗標層 ＋ **行為層之 ASCII 遞交**）、`LexiconAssemblyTests` 之真值表維度 5 → 6（32 → 64 組）；**變異測試**證明有效（拿掉否決 ⇒ IH168 轉紅 4 處，含行為層）。**文案**：四語系各 2 條 `description` 補上優先權之敘述（不新增 UI 連動停用）。**基線**：633 → **634 支／0 失敗**（兩倉同值）。**順帶修復**：本文 **§九／§十一 之表格遭空行切斷**、且 `## 十、驗證要求` 與 `### 10.1` 兩個標題**被黏進表格列**（歷次增補所遺留之結構缺陷，已重建；掃描複驗 0 處可疑）。**受修訂之小節**：**§8.9.3（新增）**、**§2.1**、**§7.1**、**§7.4**、**§10.1**、**§10.4**、§9、§11。**無後續 phase 待排**。
 > - **v24（2026-09-26，**Phase 259 · Task 6 完工回檢＝注音狂打警示之置首**）**：事主裁定「`kFuriousTypingEnabled4Zhuyin` 的 description 得在**最開頭**就顯示『⚠︎ 該模式無法在中英文輸入回退模式啟用時起作用。』＋換行，因為插在其他位置的話不醒目」⇒ 四語系之該條 `description` 首行插入該警示（`⚠︎` ＝ U+26A0 ＋ U+FE0E、其後一個半形空格、其後 `\n`），並**移除 P258 加在句中**的那一句（同一件事在一條字串內說兩次既冗餘、又會出現兩種稱謂）⇒ 該條字串內之警告自此**只有一處、且在最前**。**事主隨即更正其措辭**（原文之「中英文輸入回退模式」為筆誤）：「**還得是「中英混合輸入回退」**」⇒ zh-Hant／zh-Hans 之首行改用該偏好 `shortTitle` 之正式稱謂（ja／en 原即用其對位之正式稱謂，不動）⇒ 四語系之首行與各自之 `shortTitle` 用語一致，先前的「刻意不對稱」**不復存在**。**處置**：本 phase 之兩份 commit（`vChewing-macOS` 與本倉）皆以 **amend** 併入，未另立 phase。**新增護欄**：助手 `metadata.test.js` 驗四語系之 `description` **以 `⚠︎` 開頭且含換行**——**位置即判準**，故斷言取 `indexOf(MARK) === 0`（只驗「在不在」守不住本裁定）；**變異測試**：把警示移到句末 ⇒ 轉紅。**基線**：助手 81 → **82 支／全過**；`make audit` exit 0、`SettingsUI` 19／4／0；**I2 空操作**（未動聚合體套件）。**受修訂之小節**：**§8.10.6（新增）**、**§10.2**（81 → 82）、§8.9.3（補一筆指向 §8.10.6）、§9（#43）。**無後續 phase 待排**。
+> - **v25（2026-09-26，**Phase 260 完工回檢＝三項寄居型別之歸位**）**：本 phase **不在本規劃書原列之九個 phase 之列**，係事主於 P259 收束後**另行開立**者（事主原問：「`Typewriter_BPMFFullMatch.swift` 是否過於複雜到需要拆成 `Typewriter_BPMFClassic`／`Typewriter_BPMFFurious`／`Typewriter_SCPC` 這幾個不同的 Typewriter」；先評估、後裁定「一次交差。你新開 P260 落實」）。**評估之結論為「不拆型別、改做歸位」**，三項判定如下：① **`Typewriter_SCPC` 不成立**——SCPC 不是 `typingMode` 的值（§7.1 之推導式已把「狂打開關 ∧ 非 SCPC ∧ 鍵盤家族」算完），SCPC 之全部行為住在代理檔之 `handleTypewriterSCPCTasks()`、由各打字機在同三處呼叫 ⇒ Classic 與 SCPC 執行同一條路徑，拆之即約 500 行逐位元組重複；② **`Typewriter_BPMFFurious` 方向對而落點錯**——狂打側之專屬邏輯依「**鍵盤家族**」而非「模式」分支（§8.6 之 `isPinyin…`／`isZhuyin…` 兩旗子），推導式之兩臂會派給同一型別；③ `Typewriter_BPMFClassic` 只是把三個狂打 `guard` 恆假。**★ 本 phase 查出並登錄之最大盲區**：`typingMode` 謂之「模式之單一出口」，而打字機內部另有**就地重新推導**（`isPinyinFuriousTypingModeEffective` 2 處、`prefs.useSCPCTypingMode` 1 處），該同步義務**無型別層強制**——**實錄兩次**：P254 之家族兩分（`a74594d`）與 P257 之 SCPC 閘（`b4d4988`）皆**只動打字機、未動推導式**。**故「這檔好複雜」之體感，大半來自此冗餘、而非打字機本身。****交付**：`FuriousTypingConfig` → `InputHandler/InputHandler_FuriousTypingConfig.swift`（78 行，新檔）、`MixedAlnumConfig` → `InputHandler/InputHandler_MixedAlnumConfig.swift`（50 行，新檔——**成對之既有慣例，故成對處理**）、`Tekkon.Composer` 之自動切音節判準 ＋ 注音閘門 → `Typewriter/Typewriter_ZhuyinFuriousAutoChop.swift`（78 行，新檔）；`Typewriter_BPMFFullMatch.swift` 868 → **732** 行、`Typewriter_MixedAlphanumerical.swift` 1025 → **979** 行。**歸屬之判準（登錄為日後之通則）**：**純函式之判準住在其唯一呼叫者之目錄**（`shouldAutoChopZhuyin` 之生產側呼叫者實查僅 `performZhuyinAutoChopIfNeeded` 一處）、**執行住在打字機**；**狀態型別住在持有者之目錄**（兩顆 Config 之持有者恆為 `InputHandlerProtocol`）。**未移入 `Sources/Tekkon/`**：§3.3 之紅線「Tekkon 於本系列零改動」不破，且該擴充住在 `LibVanguard` 正是 P255 讓 30 萬次回歸靶零成本驅動之原因。**驗證**：**634 支／0 失敗、exit 0**（動工前後同值；**新增檔案不入任何靶**）、兩倉逐檔 SHA-256（`Sources` ＋ `Tests`，排除 `.DS_Store`）**211 檔全同、0 不符**；**無損證明**以逐行文字指紋行之（LOST 僅 1 行之陳舊 doc comment、GAINED 僅檔頭與 `import`／`MARK`／`- Note:` 共 20 行）——此形比「測試全綠」更強，因它同時證明**沒有任何一行被靜默丟棄**。**manifest 無需改動**（`sources:` 之命中皆為 `resources:` 之誤命中、靶皆目錄式、`project.pbxproj` 對此二檔零引用）。**「未動」亦為交付（明列）**：評估之第 2 步（`FuriousTypingPolicy` 之單向政策）與第 3 步（三型別）**本 phase 皆不做**；前者之日後判準為——**當兩側狂打之行為分岔到無法用同一個 `handle` 表達時，該拆的是「家族」；`SCPC` 永遠不該成為型別**（它是一個與模式正交之偏好，本節之推導式已正確地如此對待它）。**交付**：`vChewing-LibVanguard` `e6442886`／`vChewing-macOS` `312dec6b`（訊息逐字相同、末尾 `(Phase 260)`；pre-commit 掃描 CRITICAL 0／WARN 0、提交後兩倉 clean、最終 byte-sync 211 檔全同）。**受修訂之小節**：文首〈修訂沿革〉（本行），以及**凡以檔案行號指名該二檔之現況表**——§3.1（`FuriousTypingConfig` 之新址 25–78）、§8.3（狂打閘門讀取點之新行號 208／278／52／71）、§8.3.1（`handle` 之新範圍 6–76）、§8.6（`hasFuriousFrontPending` 之五個寫入點新行號）、§8.7（熱路徑 104）、§8.8 與其「新增」段（判準之新檔與新行號）。**未重編者（刻意）**：本卷各 phase 之**歷史記錄**（P251–P259 篇）與 `DevReqsHistory` 之各列——其行號係當時之實況、依歷史記載原則原樣保留。**順帶修復**：§8.8 之表格有一列（`判準之模式閘（v14）`）**被空行切離表格**——此為 v14 之增補所遺留（與 P258 修復者同型之結構缺陷），本 phase 就地接回並以掃描複驗 **0 處可疑**。**無後續 phase 待排。**
 
 ---
 
@@ -133,10 +134,10 @@ zh-Hans 一律照 **zh-Hans-TW** 紀律（僅簡化字形、詞彙沿用臺灣�
 | `hasFuriousFrontPending` | 同檔 `:68–70` | `isFuriousTypingModeEffective && !composer.romajiBuffer.isEmpty` |
 
 `isFuriousTypingModeEffective` 之**讀取點共 12 處**（實查）：
-`Typewriter_BPMFFullMatch.swift:269`（`allowsExtendedRomajiBuffer`）、`:321`（trail 記錄）；`InputHandler_CoreProtocol.swift:215`（`isPinyinFamilyTypingMode`）、`:873`（POM matchMode）、`:885`（POM 自動套用抑制）；`InputHandler_HandleCandidate.swift:281`（`furiousShift`）；`InputHandler_FuriousResegmentation.swift:69, 166, 352, 441`；`InputHandler_HandleStates.swift:43`（`furiousFrontContext`）、`:119`（`furiousAbbreviatedCells`）；`Session/InputSession_Delegates.swift:352`。
+`Typewriter_BPMFFullMatch.swift:208`（`allowsExtendedRomajiBuffer`）、【P260 新址】`:278`（trail 記錄）；`InputHandler_CoreProtocol.swift:215`（`isPinyinFamilyTypingMode`）、`:873`（POM matchMode）、`:885`（POM 自動套用抑制）；`InputHandler_HandleCandidate.swift:281`（`furiousShift`）；`InputHandler_FuriousResegmentation.swift:69, 166, 352, 441`；`InputHandler_HandleStates.swift:43`（`furiousFrontContext`）、`:119`（`furiousAbbreviatedCells`）；`Session/InputSession_Delegates.swift:352`。
 
 `hasFuriousFrontPending` 之**讀取點共 6 處**：
-`Typewriter_BPMFFullMatch.swift:122`（Shift＋選字鍵路由）、`:136`（Enter 固化）；`InputHandler_TriageInput.swift:35`（固化後之空格消費）、`:49`（Tab）；`InputHandler_HandleStates.swift:271`（`confirmFuriousFrontCandidate` 之守衛）、`:813`（標點前固化）；`Session/SessionCoreProtocol.swift:198`（`isFuriousCopilotCandidateWindowVisible`）。
+`Typewriter_BPMFFullMatch.swift:52`（Shift＋選字鍵路由）、【P260 新址】`:71`（Enter 固化）；`InputHandler_TriageInput.swift:35`（固化後之空格消費）、`:49`（Tab）；`InputHandler_HandleStates.swift:271`（`confirmFuriousFrontCandidate` 之守衛）、`:813`（標點前固化）；`Session/SessionCoreProtocol.swift:198`（`isFuriousCopilotCandidateWindowVisible`）。
 
 `typingMode` 之讀取點共 3 處：`InputHandler_HandleComposition.swift:27`（typewriter 分派）、`InputHandler_FuriousResegmentation.swift:64`、`Session/SessionProtocol.swift:337`（內文模式提示之 i18n 鍵）。
 
@@ -158,7 +159,7 @@ zh-Hans 一律照 **zh-Hans-TW** 紀律（僅簡化字形、詞彙沿用臺灣�
 
 ### 2.3 `FuriousTypingConfig` 與注音之關係
 
-`FuriousTypingConfig`（`Typewriter_BPMFFullMatch.swift:21–74`）之三欄——`trail`（拼音字母 blob 序列）、`highlightOverride`、`coSegmentedOffers`——**皆為拼音專屬**。注音狂打**不寫入 trail、不建立 offers**；`furiousHighlightOverride`／`coSegmentedOffers` 於注音側**無生產者**（前者由 copilot 窗之高亮驅動、後者為拼音之聯合重切產物）——**注音狂打不寫入對方**，故：
+`FuriousTypingConfig`（【P260 新址】`InputHandler_FuriousTypingConfig.swift:25–78`）之三欄——`trail`（拼音字母 blob 序列）、`highlightOverride`、`coSegmentedOffers`——**皆為拼音專屬**。注音狂打**不寫入 trail、不建立 offers**；`furiousHighlightOverride`／`coSegmentedOffers` 於注音側**無生產者**（前者由 copilot 窗之高亮驅動、後者為拼音之聯合重切產物）——**注音狂打不寫入對方**，故：
 
 - `furiousConfig` 這一項**協定要求**（`InputHandler_CoreProtocol.swift:50`）**不動**（避免打破 `InputHandler`／`MockInputHandler` 兩個 conformer）；
 - 注音狂打**不呼叫** `invalidateFuriousTrail()`／`popFuriousTrail(_:)`（呼叫亦無害，因其只動拼音狀態）；
@@ -168,7 +169,7 @@ zh-Hans 一律照 **zh-Hans-TW** 紀律（僅簡化字形、詞彙沿用臺灣�
 
 | 段 | 落點 | 注音可否複用 |
 |---|---|---|
-| `BPMFFullMatchTypewriter.handle` 之選字鍵路由、Enter 固化、Backspace | `Typewriter_BPMFFullMatch.swift:106–144` | **可**（皆以 `hasFuriousFrontPending` 為閘，閘一放寬即通） |
+| `BPMFFullMatchTypewriter.handle` 之選字鍵路由、Enter 固化、Backspace | 【P260 新址】`Typewriter_BPMFFullMatch.swift:6–76` | **可**（皆以 `hasFuriousFrontPending` 為閘，閘一放寬即通） |
 | `consumeReadingInputIfNeeded` 之「先送注拼槽」骨架 | 同檔 `:240–283` | **可**（注音分支已在 `receiveKey(fromScalar:)` 內） |
 | `performPinyinAutoChopIfNeeded` | 同檔 `:285–350` | **不可**（拼音專屬）；注音另立一支 |
 | `composeReadingIfReady` ＋ `readingKeyForQuery` | 同檔 `:352` 起 | **可**（與拼音無關；`phonabetKeyForQuery` 本即注音） |
@@ -377,7 +378,7 @@ public var hasFuriousFrontPending: Bool { furiousFrontUnfinishedReading != nil }
 | 項 | 處置 |
 |---|---|
 | `isFuriousCopilotCandidateWindowVisible`（`SessionCoreProtocol.swift:196–199`） | **本身不需改**（其定義已是三項之合取）——**惟「閘一改即通」為誤**（見上之 v12 更正 ①）：`.ofInputting` 之候選另有來源，注音側須先補**讀音桶** |
-| 其餘 5 個 `hasFuriousFrontPending` 讀取點（`Typewriter_BPMFFullMatch.swift:190`（Shift＋選字鍵就地選字）、`:204`（Enter 固化）；`InputHandler_TriageInput.swift:30`（固化後之空格消費）、`:49`（Tab）；`InputHandler_HandleStates.swift:271`（就地確認）、`:813`（標點前固化）） | **皆為所欲**：注音狂打悉數沿用。**v12 補述**：`solidifyFuriousFrontReading` 原以 `guard !romaji.isEmpty` 起手 ⇒ 注音側**靜默退回**，故本列之前提是「固化函式須一併補注音分支」（已補）；另 `TriageInput` 之標點讀取點在**大千排列下不經 `,`**（`,` 是注音符號鍵ㄝ，走自動切音節） |
+| 其餘 5 個 `hasFuriousFrontPending` 讀取點（`Typewriter_BPMFFullMatch.swift:52／56`（Shift＋選字鍵就地選字）、【P260 新址】`:65`（Enter 固化）；`InputHandler_TriageInput.swift:30`（固化後之空格消費）、`:49`（Tab）；`InputHandler_HandleStates.swift:271`（就地確認）、`:813`（標點前固化）） | **皆為所欲**：注音狂打悉數沿用。**v12 補述**：`solidifyFuriousFrontReading` 原以 `guard !romaji.isEmpty` 起手 ⇒ 注音側**靜默退回**，故本列之前提是「固化函式須一併補注音分支」（已補）；另 `TriageInput` 之標點讀取點在**大千排列下不經 `,`**（`,` 是注音符號鍵ㄝ，走自動切音節） |
 | `unfinishedReading`（`InputSession_Delegates.swift:204–208`） | **須改**：其現行實作取 `inputHandler?.composer.romajiBuffer`（拼音專屬），注音下恆空。改為依 `typingMode` 分流。**v12 補述**：分流之實作**上移至 `InputHandlerProtocol.furiousFrontUnfinishedReading`**，session 與 mock 皆只轉發 ⇒ 判準不再有兩份 |
 | `CtlCandidateProtocol.unfinishedReading`（`:38`）之協定形狀 | **不動**（本來就是 `String?`） |
 | `MockSession.unfinishedReading`（`Tests/…/MockedInputHandlerAndStates.swift:127–135`） | **須同步改**（其註解已自陳「與生產端 `InputSession_Delegates` 對應」）；測試須釘住注音下之回傳值。**v12 補述**：實際作法是讓它與生產端**逐字相同**（皆為一行轉發），而非各自重寫一遍 |
@@ -541,7 +542,7 @@ extension Tekkon.Composer {
 |---|---|---|
 | 動態注音排列之數目 | 5（`.ofDachen26`／`.ofETen26`／`.ofHsu`／`.ofStarlight`／`.ofAlvinLiu`） | `Tekkon_Phonabets.swift:51–71` |
 | 讀音 ↔ 按鍵對照之**引擎內** API | **不存在**（正向為程序式解碼；反向無） | `Tekkon_SyllableComposer.swift:601–629`；`grep` 全倉零命中的反向表 |
-| 逐鍵解碼之熱路徑 | `translate(key:)` 於**每次注音按鍵**執行；`inputValidityCheck(charStr:)` 至少每鍵一次 | `:246`；`Typewriter_BPMFFullMatch.swift:251` |
+| 逐鍵解碼之熱路徑 | `translate(key:)` 於**每次注音按鍵**執行；`inputValidityCheck(charStr:)` 至少每鍵一次 | `:246`；【P260 新址】`Typewriter_BPMFFullMatch.swift:251` |
 | 唯一之全量對照 | 測試資料 `TestAssets_Tekkon/Tekkon_TestData.swift`：**1485** 行 × 5 排列；扣除 59 個 `` `NULL `` 單元後**已斷言 7366 筆** | 該檔 `:5–1492`；`TekkonTests_Arrangements.swift:218–246` |
 | 該表之相異無調詞幹 | **422**（v5 更正；原記 439 係 `_` 未正規化之誤算，見 §4.2） | 本文實測（P251 複核） |
 | 該表之（情境無關之）相異按鍵序列 | **5888** 條、19658 字元、**6072** 相異前綴 | 本文實測 |
@@ -758,8 +759,8 @@ extension InputHandlerProtocol {
 
 | 讀取點 | 為何必須拼音專屬 |
 |---|---|
-| `Typewriter_BPMFFullMatch.swift:269`（`allowsExtendedRomajiBuffer = …`） | 該旗子只對 `romajiBuffer` 有意義；注音側若設為 `true` 則 `romajiBuffer`（恆空）無影響，但語意上不該設 |
-| `Typewriter_BPMFFullMatch.swift:321`（trail 記錄） | trail 是拼音字母 blob |
+| 【P260 新址】`Typewriter_BPMFFullMatch.swift:208`（`allowsExtendedRomajiBuffer = …`） | 該旗子只對 `romajiBuffer` 有意義；注音側若設為 `true` 則 `romajiBuffer`（恆空）無影響，但語意上不該設 |
+| 【P260 新址】`Typewriter_BPMFFullMatch.swift:278`（trail 記錄） | trail 是拼音字母 blob |
 | `InputHandler_CoreProtocol.swift:215`（`isPinyinFamilyTypingMode`） | 該旗子之語意就是「拼音系」（`:209–213` 之註解已明言）。**注音狂打不是拼音系** ⇒ 鍵盤佈局翻譯**必須**照常執行（注音要美規鍵盤翻譯！） |
 
 **紅線**：`isPinyinFamilyTypingMode` 之語意**不得**因本案而放寬。若在 Phase 255 之施工中發現 `isFuriousTypingModeEffective` 之某讀取點對注音也該為真，**逐點改用 `isFuriousTypingModeEffective`**，而非把 `isPinyinFamilyTypingMode` 改成 `isFuriousTypingModeEffective`。
@@ -770,7 +771,7 @@ extension InputHandlerProtocol {
 
 ### 7.3 自動切音節之落點
 
-**新增**（`Typewriter_BPMFFullMatch.swift` 內，與 `performPinyinAutoChopIfNeeded` 並列）：
+**新增**（自 P260 起住在 `Typewriter_ZhuyinFuriousAutoChop.swift`；判準 `shouldAutoChopZhuyin` 於該檔 `:38`，執行端仍與 `performPinyinAutoChopIfNeeded` 並列，【P260 新址】）：
 
 ```swift
 /// 注音狂打：本鍵是否應先把當前音節固化進組字器。
@@ -782,7 +783,7 @@ private func performZhuyinAutoChopIfNeeded(
 ) -> Bool?
 ```
 
-呼叫點：`consumeReadingInputIfNeeded` 內 `receiveKey` 之**正前方**，與 `performPinyinAutoChopIfNeeded` 同一位置（`Typewriter_BPMFFullMatch.swift:255–269`），以 `switch handler.typingMode` 分流。
+呼叫點：`consumeReadingInputIfNeeded` 內 `receiveKey` 之**正前方**，與 `performPinyinAutoChopIfNeeded` 同一位置（【P260 新址】`Typewriter_BPMFFullMatch.swift:194–208`），以 `switch handler.typingMode` 分流。
 
 **固化之實際動作**：以 `phonabetKeyForQuery(pronounceableOnly: true)` 取當前讀音鍵 → `assembler.insertKey(...)`（照 `composeReadingIfReady` 之既有寫法，`:407`）→ `composer.clear()` → 續行本鍵之接收。**不觸碰 trail、不做重切分。**
 
@@ -1020,7 +1021,6 @@ P259（跨倉驗收 ＋ Swift 5.10 可建置性 ＋ 文書）← 依賴 P252–P
 | **依賴** | P253（新偏好名）＋ P254（`typingMode` 之新值） |
 | **判準（v5 定案）** | `config.shouldSuppressFactoryZhuyinwenData = (prefs.pinyinTypingEnabled && prefs.furiousTypingEnabled4Pinyin) \|\| (!prefs.pinyinTypingEnabled && prefs.furiousTypingEnabled4Zhuyin)` |
 | **判準之實查補強（v13）** | 熱鍵之動作實為**兩句**——`PrefMgr.shared.pinyinTypingEnabled.toggle()` **＋** `self.core?.inputHandler?.ensureKeyboardParser()`（`vChewing-macOS/…/MainAssembly4Darwin/SessionController/IMEMenuSputnik.swift:282–283`）⇒ `pinyinTypingEnabled` 即「使用者所宣告之打字方式」之真源，注拼槽之鍵盤家族係由其**導出**、非獨立狀態。故本式不依賴二者之先後，亦不依賴注拼槽之即時狀態 |
-
 | **判準之模式閘（v14，事主裁定）** | 上式再與 `!prefs.cassetteEnabled && !prefs.useSCPCTypingMode` 合取 ⇒ 語意為「**狂打確實生效中**」。**同輪審計另查得**：`performPinyinAutoChopIfNeeded` 原本無任何狂打閘門 ⇒ SCPC 下拼音連打仍自動切音節，已補 `guard !prefs.useSCPCTypingMode`（磁帶不經該型別）。詳見 `Reqs_0251-0260.md` 之 Phase 257 篇 §八 || **為何可續留 `LexiconAssembly` 側（P251 未知四之結論）** | ① `⌃⌘J`（選單項之鍵等效）之動作即 `PrefMgr.shared.pinyinTypingEnabled.toggle()`（`IMEMenuSputnik.swift:280–283`）⇒ 熱鍵改的**正是** `pinyinTypingEnabled`；② `keyboardParser4Pinyin`／`keyboardParser4Zhuyin` 兩槽**不受熱鍵影響**（只有計算屬性 `keyboardParser` 之 setter 才會分流寫入，`PrefMgr_Core.swift:361–370`）；③ `syncPrefs()` 於**每一次分診之頂端**執行（`InputHandler_TriageInput.swift:14`）⇒ 熱鍵之效果**必然在下一拍按鍵被處理之前**反映進 `config`。**故無須**改動 `InputHandler_TriageInput.swift`、**無須**以 `typingMode` 重構推入端 |
 | **完成定義（v13 補述）** | ① 既有 2 支測試照舊通過；② 新增斷言：**四態**（拼音狂打／注音狂打／拼音非狂打／注音非狂打）——**實作強化為 8 組全枚舉**，且每組驗兩層（`syncPrefs()` 寫入 config 之值 ＋ 查詢結果是否仍見注音文）；③ **新增一則熱鍵測試**：於 `pinyinTypingEnabled` 切換後之下一拍，抑制旗標須即時改變（**實作強化為兩支**：靶內之 `syncPrefs()` 版 ＋ **整合靶 IH705** 之真實 `triageInput` 版，後者釘住「切換與分診之間仍為舊值」）；④ 兩倉 byte-sync 之輸出 |
 | **風險** | **低**。熱鍵那一題已於 P251 查清；本 phase 之改動縮小為一行析取式 |
