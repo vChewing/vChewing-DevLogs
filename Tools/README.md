@@ -17,10 +17,14 @@ Python 3 單檔（只用標準庫），可直接執行。
 ```sh
 python3 housestyle_audit.py            # 全倉；列出超標項與統計（exit 1 表有超標）
 python3 housestyle_audit.py --since 250
+python3 housestyle_audit.py --enforce-from 241   # 複驗 2026-09-27 第二輪回溯之 P241–P261
 python3 housestyle_audit.py --quiet    # 只在有超標時出聲
 python3 housestyle_audit.py --json
 python3 housestyle_audit.py --self-test
 ```
+
+> `--since N` 只決定**載入哪些 phase**；真正的**判斷起點**是 `--enforce-from N`（或預設之
+> `max(現行卷首 phase, HOUSESTYLE_EPOCH_PHASE)`）。要複驗某段範圍，用後者。
 
 **量尺**（規則本體見 `KnowledgeMemo4LLM.md` §12.7；改規則請同步改本檔之 `BUDGETS`）：
 
@@ -28,8 +32,14 @@ python3 housestyle_audit.py --self-test
 - **`DevReqsHistory.md` 各列** ≤ 300 chars（該檔是索引，非第二份正本）。
 - **`KnowledgeMemo4LLM.md` 開頭部不得有逐 Phase 記述**（該檔只收「現況」與「施工注意事項」）。
 - **儀式小節**（§8.0.1 收尾回檢／兩倉 byte-sync／測試基線／變異測試）同一 phase 內至多一次。
+- **分隔線**：`--------------------`（恰 20 連字號）**只准出現於 Phase 分界**；**Phase 篇之內部不得有任何以連續 `-` 組成之段落分割線**（§12.7.4）。表格表頭之 `|---|` 不算橫線，不會誤判。
 
-**適用起點＝P262**（§12.7 訂於 2026-09-27、即 P261 完工之後；之前者列為 `legacy（不判）`，`--all-history` 可改為嚴苛模式）。**它不判內容好壞**——只報「誰超預算、超在哪一份文件」。超標並非一律要改：**超標者須在交差回報中寫明一行理由**。
+**型態額度**：§12.7.3 之型態係按 phase 之**性質**（修補／標準／大型），自動量尺無從得知，
+故預設以字數推之；已明示型態者登錄於本檔之 `BUDGET_OVERRIDES`（現載 P241–P261 之回溯額度）。
+**新 phase 通常不必登記**——預算本容超標，記一行理由即可。
+
+**適用起點＝P262**（§12.7 訂於 2026-09-27、即 P261 完工之後；**P241–P261 已回溯套用**，見 §12.7.6；
+P240 及以前列為 `legacy（不判）`，`--all-history` 可改為嚴苛模式）。**它不判內容好壞**——只報「誰超預算、超在哪一份文件」。超標並非一律要改：**超標者須在交差回報中寫明一行理由**。
 
 ## 為何要有這兩支
 

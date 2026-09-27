@@ -63,8 +63,33 @@ RITUALS = {
     "變異測試": r"變異測試",
 }
 
+# §12.7.3 之型態係**按該 phase 之性質**（修補／標準／大型），非按字數；自動量尺無從得知性質，
+# 故預設以字數推之。下表為**已明示型態者**之覆寫——凡作者已聲明其型態者登錄於此，以免誤報。
+# **新 phase 通常不必登記**：預設推測已夠用，且預算本容超標（記一行理由即可）。
+# 以下為 2026-09-27 第二輪回溯套用（P241–P261）時逐篇訂定之額度：
+LARGE_PHASES = {241, 245, 250, 251, 252, 258, 259, 260, 261}      # 大型／系列／規劃 ⇒ 8,000
+STANDARD_PHASES = {242, 243, 244, 246, 247, 248, 249,                # 標準 ⇒ 5,000
+                   253, 254, 255, 256, 257}
+BUDGET_OVERRIDES = dict([(p, 8000) for p in LARGE_PHASES]
+                        + [(p, 5000) for p in STANDARD_PHASES])
+
+
+def budget_for(phase, chars):
+    """回傳 (額度, 型態名)。"""
+    if phase in BUDGET_OVERRIDES:
+        lim = BUDGET_OVERRIDES[phase]
+        name = {2500: "修補", 5000: "標準", 8000: "大型"}[lim]
+        return lim, name
+    if chars <= 4000:
+        return BUDGETS["patch"], "修補"
+    if chars <= 12000:
+        return BUDGETS["standard"], "標準"
+    return BUDGETS["large"], "大型"
+
 PHASE_RE = re.compile(r"^# Phase (\d+)", re.M)
 HEADING_RE = re.compile(r"^(#{2,4}) ")
+TAIL_SEP_RE = re.compile(r"\n+-{3,}\s*$")
+RULE_RE = re.compile(r"-{3,}")
 MEMO_PHASE_ENTRY_RE = re.compile(r"^- \*\*.*?Phase \d+.*?已完工")
 
 
@@ -143,7 +168,12 @@ def audit_reqs(root, since=0):
             for phase, _title, body in split_phases(text):
                 if phase < since:
                     continue
-                chars = len(body) + body.count("\n")
+                # 量「該 Phase 篇本身」之 chars：去尾部分隔線後，補回一個換行
+                # （與獨立檔 len(open(...).read()) 同義；§12.7.3 之預算即以此計）。
+                core = TAIL_SEP_RE.sub("", body).rstrip("\n")
+                chars = len(core) + 1
+                # §12.7.4：Phase 篇之內部不得有任何以連續 `-` 組成之段落分割線。
+                rules = [l for l in core.split("\n") if RULE_RE.fullmatch(l)]
                 rituals = {}
                 for name, rx in RITUALS.items():
                     hits = [h for h, _c in sections(body) if re.search(rx, h)]
@@ -155,6 +185,7 @@ def audit_reqs(root, since=0):
                     "chars": chars,
                     "headings": len([1 for l in body.split("\n") if HEADING_RE.match(l)]),
                     "rituals": rituals,
+                    "rules": len(rules),
                 })
     return rows
 
@@ -208,19 +239,22 @@ def report(data, since=0):
                 n_legacy += 1
             continue
         flag = ""
-        if r["chars"] > BUDGETS["large"]:
-            flag = "  ← 逾大型預算 %.2f×" % (r["chars"] / BUDGETS["large"])
-        elif r["chars"] > BUDGETS["standard"]:
-            flag = "  ← 逾標準預算 %.2f×" % (r["chars"] / BUDGETS["standard"])
+        lim, kind = budget_for(r["phase"], r["chars"])
+        if r["chars"] > lim:
+            flag = "  ← 逾%s預算 %.2f×" % (kind, r["chars"] / lim)
         rit = ""
         bad = {k: v for k, v in r["rituals"].items() if v > RITUAL_ONCE_MAX}
         if bad:
             rit = "  儀式重複：" + "、".join("%s×%d" % (k, v) for k, v in sorted(bad.items()))
+        if r.get("rules"):
+            rit += "  ← 篇內橫線 %d 條（§12.7.4 所禁）" % r["rules"]
         print("  P%-4d %7d chars  %2d 小節  %s%s%s" % (r["phase"], r["chars"], r["headings"], r["volume"], flag, rit))
         if flag:
             over.append("P%d（%d chars）" % (r["phase"], r["chars"]))
         if bad:
             over.append("P%d 儀式重複" % r["phase"])
+        if r.get("rules"):
+            over.append("P%d 篇內橫線 %d 條" % (r["phase"], r["rules"]))
 
     if n_legacy:
         print("  （另有 %d 個歷史 phase 逾預算——`legacy（不判）`，見 §12.7.6）" % n_legacy)
@@ -260,10 +294,11 @@ def self_test():
         os.makedirs(os.path.join(root, "Reqs4LLM", "Archive_P201-P300"))
         vol = os.path.join(root, "Reqs4LLM", "Archive_P201-P300", "Reqs_0251-0260.md")
 
-        # 紅：超預算 ＋ 儀式重複
+        # 紅：超預算 ＋ 儀式重複 ＋ 篇內橫線
         bad = "# Phase 251\n\n" + ("x" * 100 + "\n") * 90
         bad += "## 六、§8.0.1 之執行記錄\n### 8.1 第 1 步：對帳\n" + "y\n" * 5
         bad += "## 七、§8.0.1 之執行記錄\n### 7.1 第 1 步：對帳\n" + "z\n" * 5
+        bad += "---\n\n## 八、篇內橫線\n"
         io.open(vol, "w", encoding="utf-8").write(bad)
         io.open(os.path.join(root, "DevReqsHistory.md"), "w", encoding="utf-8").write(
             "| Phase 251 | " + "a" * 400 + " |\n")
@@ -273,12 +308,15 @@ def self_test():
         red = (d["reqs"][0]["chars"] > BUDGETS["large"]
                and sum(1 for v in d["reqs"][0]["rituals"].values() if v > RITUAL_ONCE_MAX) >= 1
                and any(x["chars"] > HISTORY_ROW_MAX for x in d["history"])
-               and d["memo"]["phase_entries"] == 1)
-        print("紅驗：超預算／儀式重複／History 超長／Memo 逐 Phase 記述 —— %s" % ("偵得" if red else "★漏檢★"))
+               and d["memo"]["phase_entries"] == 1
+               and d["reqs"][0]["rules"] == 1)
+        print("紅驗：超預算／儀式重複／History 超長／Memo 逐 Phase 記述／篇內橫線 —— %s"
+              % ("偵得" if red else "★漏檢★"))
         ok &= red
 
-        # 綠：全數合規
-        io.open(vol, "w", encoding="utf-8").write("# Phase 251\n\n## 手術範圍\n短。\n")
+        # 綠：全數合規（含表格表頭之 `|---|` 不得誤判為橫線）
+        io.open(vol, "w", encoding="utf-8").write(
+            "# Phase 251\n\n## 手術範圍\n\n|---|------|\n| a | b |\n\n## 未動\n\n短。\n")
         io.open(os.path.join(root, "DevReqsHistory.md"), "w", encoding="utf-8").write(
             "| Phase 251 | 短摘要。 |\n")
         io.open(os.path.join(root, "KnowledgeMemo4LLM.md"), "w", encoding="utf-8").write(
@@ -287,8 +325,9 @@ def self_test():
         green = (d["reqs"][0]["chars"] <= BUDGETS["large"]
                  and all(v <= RITUAL_ONCE_MAX for v in d["reqs"][0]["rituals"].values())
                  and all(x["chars"] <= HISTORY_ROW_MAX for x in d["history"])
-                 and d["memo"]["phase_entries"] == 0)
-        print("綠驗：合規樣本不誤報 —— %s" % ("通過" if green else "★誤報★"))
+                 and d["memo"]["phase_entries"] == 0
+                 and d["reqs"][0]["rules"] == 0)
+        print("綠驗：合規樣本不誤報（表格表頭不誤判） —— %s" % ("通過" if green else "★誤報★"))
         ok &= green
     return 0 if ok else 1
 
