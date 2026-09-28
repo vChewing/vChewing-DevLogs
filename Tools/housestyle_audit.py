@@ -71,7 +71,7 @@ RITUALS = {
 LARGE_PHASES = {241, 245, 250, 251, 252, 258, 259, 260, 261}      # 大型／系列／規劃 ⇒ 8,000
 STANDARD_PHASES = {242, 243, 244, 246, 247, 248, 249,                # 標準 ⇒ 5,000
                    253, 254, 255, 256, 257,
-                   262, 263, 264, 265}
+                   262, 263, 264, 265, 266}
 BUDGET_OVERRIDES = dict([(p, 8000) for p in LARGE_PHASES]
                         + [(p, 5000) for p in STANDARD_PHASES])
 
