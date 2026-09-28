@@ -261,7 +261,7 @@
 | Phase 241 | **配置助手（Configuration Assistant）之落地：`ValueAdd/WebConfigAssistant/`（TypeScript；**零 npm 相依**；Win2000/ME 配色；產物為單檔自足 HTML `dist/assistant.html`，233.0 KB）暨其防漂移機制與契約測試（兩倉之 `vChewingSharedCLI` 新增 `dump-userdef-metadata` 動詞 ＋ `vChewing_SettingsUI` 之契約測試）。… |
 | Phase 242 | **「ㄉㄜ˙ 被自動選成『底』」之病灶定位與辭典手術，暨 `unigramLRUCache` 之三處作廢缺口修補**：工單樓主（ACYL，macOS 27.2／v4.8.4／M4）回報「只要輸入到 OO底（ㄉㄜ˙）就會變成『底』」，經事主交辦調查。**病灶（資料側、非引擎側）**：以出貨辭典為靶實測再現——讀音 `ㄉㄡ-ㄉㄜ˙` 之組句結果為「兜底」：該鍵下有詞頻 1 之「兜底」（−8.718），勝過同鍵「兜的」（−9.32，詞頻 0 之墊底權重）與分解路徑「都」(−5.038)＋「的」(−4.976)＝−10.014。… |
 | Phase 243 | **組字尚未遞交時按 F1－F20 會外洩給客體（未遞交讀音消失、並寫入不可列印字元）之病灶定位與修補**（vChewing-macOS Issue #617；工單樓主 stantheman0128，4.8.4 build 4840／大千／中英混打開）。… |
-| Phase 244 | **中英混打之空白鍵未貫徹「空格鍵對內文組字區的行為＝插入空格」偏好之修補**（vChewing-macOS Issue #612；工單樓主 stantheman0128；4.8.4 build 4840／大千／中英混打開）。**病灶（兩層，… |
+| Phase 244 | **中英混打之空白鍵未貫徹「空格鍵對內文組字區的行為＝插入空格」偏好之修補**（vChewing-macOS Issue #612；工單副樓主 stantheman0128；4.8.4 build 4840／大千／中英混打開）。**病灶（兩層，… |
 | Phase 245 | **配置助手之動線改造：起始配置（starter preset）之引入、四頁快速路線、與「隨時可結束」之出口**（只動 `vChewing-macOS/ValueAdd/WebConfigAssistant/`；**未動任何 Swift 生產碼**）。**事由**：事主原文「P241 所有與 Swift 無關的內容現在被 Rebase 到 HEAD 了，新增了 .gitIgnore 來忽略掉建置產物。你可以藉由調查這個 harness 當前工作區其他對話的方式熟悉 P241 目前的狀態。… |
 | Phase 246 | **配置助手之建置鏈免除對 node 之依賴**（只動 `vChewing-macOS/ValueAdd/WebConfigAssistant/`；**未動任何 Swift 生產碼**）。**事主原文（2026-09-25）**：「新任務：免除對 node 的依賴、且現階段不考慮 windows / linux 下的編譯。這個作為 Phase 246 任務請落實。… |
 | Phase 247 | **「一般設定」新增「新手推薦：開啟快速配置助手」之入口（兩態分派）**（`vChewing-macOS`；只動 `vChewing_SettingsUI` 之兩面板 ＋ 四語系 `.strings`）。**事由**：P240 使「剪貼簿匯入」成為配置包之入口，本 phase 於其上游補上「配置包之產製者」的入口——即 P245／P246 之產物（配置助手）。… |
