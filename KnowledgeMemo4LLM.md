@@ -639,6 +639,8 @@ make clean510               # 清兩條 scratch
 - **★ 有副作用之輔助函式不得寫進 `#expect` 之運算式（2026-09-28，P263 實錄）**：Swift Testing 於失敗診斷時會**二次求值**該運算式——IH171 首遍得窗、次遍得空窗（打字與切環境被執行兩遍），遂誤報失敗。凡打鍵／切環境／寫入狀態者，一律先取值再斷言。
 - **★ 一查詢若由兩分區（原廠／使用者辭典）合成，其匹配語義與呈現順序須逐項對齊（2026-09-28，P262 實錄）**：`abbreviatedWordCandidates` 之兩側不一致——原廠側恆等段（trie 內定 `longerSegment: false`），使用者片語側之通用前綴掃描則忽略多出的段 ⇒ 兩格之簡拼撈回三音節之使用者造詞。**修在查詢端、不動通用前綴 API**，收斂取**上界**（短者另由需整詞完全匹配之消費端把守）；**呈現順序亦然**——同一功能在兩模式各據一條路徑時，其窗內順序須同源（IH170）。
 
+- **★ Tekkon 之 documentation 一律自持——不得與具體 commit／phase number／CI 掛勾（2026-09-28，P268；事主指示）**：Tekkon（`Sources/Tekkon`、`Tests/TekkonTests`）之來源與測試**逐字共用**於獨立發行版 Tekkon package（Swift／C++／C# 三倉，住 `_DedicatedComponentRepos/TekkonWorkspace`）⇒ **其註解之讀者是該 package 之使用者，不是本倉之施工者**。**禁列**：phase 號（`P2xx`／`Phase NNN`）、本倉規劃書之路徑與節號（如 `Research/Phase250-…` §3.x）、commit hash、CI／workflow、本倉術語（如「靶」）、消費者模組與其型別（`LibVanguard`／`furiousFrontContext`／`Typewriter_…` 之呼叫點）、他款輸入法之比較（如智能狂拼／搜狗拼音）。**應寫**：以該 API 自身之語義自持（例：判準之法源改引套件內之 `Composer.shouldAutoChopPhonabets(byTyping:)`，而非本倉之規劃書）。**授權橫幅與 `SPDX` 行不在此限**。**方向**：本倉（`vChewing-LibVanguard`／`vChewing-macOS`）為**正本**，dedicated 倉由本倉 byte-sync 過去 ⇒ **清理須先落在本倉**（只清 dedicated 側會被下輪同步復發）。**配套**：兩側之 `Sources/Tekkon`＋`Tests/TekkonTests` 應保持逐檔相同（今日 16 檔逐位元組相同）。
+
 ### 12.7 記述預算與骨架（House Style；2026-09-27 訂，事主指示）
 
 > **適用起點**：**P262 起為當然適用**。**P241–P261 已於 2026-09-27 依事主第二次指示回溯套用**（21 篇全數改寫，實績見 12.7.6）；**P240 及以前之各卷不回改**，稽核工具一律列為 `legacy（不判）`。
