@@ -310,6 +310,9 @@ Megrez 的繼任者，實現漢字組句動態規劃演算法。
 
 - **未認領之 Command 系熱鍵：先遞交、後交還客體**（2026-10-05，Phase 282 落地）：協定擴充預設實作 `InputSignalProtocol.isCommandShortcutChord`（＝`isHoldingAny([.command])`）——**只認 Command**，Ctrl／Option 之組合不含在內（不帶 Command 者仍可能是文字資料或控制字元）。**三處終末攔截須各自讓位**：① `InputHandler_TriageInput` 之終末處理（`vCLog("Blocked data: …")` ＋ `errorCallback?("A9BFF20E")` 之前）；② 選字窗／符號表分支（`handleCandidate` 回 false 後，**`.ofAssociates` 仍照舊轉空態重分診**）；③ `InputHandler_HandleCandidate` 尾端泛用碼 `172A0F81` 之前（`Ctrl+Cmd+[`／`]` 之候選輪替在其前，不受影響）。**★ 交還之前必須先遞交**（`releaseUnclaimedCommandChord()`）：只回 `false` 是不夠的——客體在輸入法仍持有內文組字區（marked text）期間不執行自己的 Command 系熱鍵（Chrome 之 `Cmd+Ctrl+C`／`Cmd+Ctrl+W` 即因此收不到，事主實機回報）；遞交走 `resetInputHandler()`（即 IMK `commitComposition:` 之同一條路），未完成讀音之去留照既有偏好 `trimUnfinishedReadingsOnCommit`，無未遞交內容時不動作。**理據**：帶 Command 者一律是選單／熱鍵語意、非文字資料，mozc 之 `handleEvent:client:` 正是只在引擎確有消費時才回 `YES`。**既有之空狀態逃生口** `isSingleCommandBasedLetterHotKey`（`InputSession_HandleEvent`）**只及空狀態**且要求旗標全集相等，故組字期間之病灶不經它。測項 `test520`～`test524`。
 
+- **★ `⌘`／`⌃⌘` 的拉丁字元取決於佈局的 command state（P282，2026-10-06）**：五個 `vChewingKeyLayout.bundle` 佈局已補「含 Command 者走拉丁表」之 `keyMapSelect`（置於控制條目前），護欄 `KeyLayoutCommandStateTests`；`⌃⌘` 系另受 Chromium `DomKeyFromNSEvent()` Step 4 之阻。上游稿見 `Research/Phase282_PostResearch_MacKeyboardLayoutCommandState.md`。
+- **★ WebKit Bugzilla 與 Chromium Buganizer：已發出的訊息（描述與留言）皆不可編輯（2026-10-06，P282）**：作者自己也不行、triage 後亦然 ⇒ 上游投遞**必須一次到位**，貼前逐項驗（標題長度與純文字、markdown 渲染、內部引用殘留、環境號）；一切更正只能以**新留言**為之。Buganizer 之 summary 硬限 **100 字元**。
+
 ---
 
 ## 附錄一、開發階段歷史
