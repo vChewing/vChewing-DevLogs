@@ -559,7 +559,7 @@ make clean510               # 清兩條 scratch
 | **vChewing-DevLogs/Reqs4LLM/Archive_P{首 Phase 所屬百位段}/Reqs_0NN1-0NN0.md**（現行卷；檔名現算，判定式見文首〈Reqs4LLM 分卷歸檔註記〉） | 每個 Phase 必須 | `# Phase XX` 標題 + `Assignee:` 行（**Model ＋ Harness** 兩者兼備，見 §12.6）＋ 規格說明 + `## Phase XX 實作結果` 小節（歸檔卷不再增改；惟對過往 Phase 之補記一律補進該 Phase 自己的記錄內——無論該卷是否已歸檔，回填規則見 §12.5） |
 | **vChewing-DevLogs/DevReqsHistory.md** | 每個 Phase 必須 | 追加**一列** `\| Phase XX \| 一句摘要 \|`，**≤ 300 chars**——本檔是索引、非第二份正本（見 §12.7） |
 | **KnowledgeMemo4LLM.md** | 每個 Phase 必須 | **只**更新 `最後更新` 標記、並增刪「現況」與「施工注意事項」兩類內容；**逐 Phase 之施工敘事一律禁止寫入本檔**（文首〈沿革不再寫入本文檔〉＋ §12.7）。**每 Phase 淨增 ≤ 1,500 chars** |
-| **UserGuide (4語言)** | 影響使用者操作時 | 在對應章節添加功能說明（鍵盤熱鍵、滑鼠操作等） |
+| **UserGuide (4語言)** | 影響使用者操作時 | 在對應章節添加功能說明（鍵盤熱鍵、滑鼠操作等）。**app 側之鍵盤熱鍵手冊（`shortcuts.html`）自 P284 起另有產製紀律**：其 zh-Hant／zh-Hans 係由官網倉之 Markdown 編譯而成，不得手改產物（見 §12.6）。 |
 
 ### 12.3 程式碼實作原則
 
@@ -659,6 +659,8 @@ make clean510               # 清兩條 scratch
 - **★ 「拼音並擊」之讀音轉換分兩式，不得互換（2026-09-29，P277）**：`convertReadingForTooltip(_:)` 供**完整**讀音（補陰平、轉教材式標調、問方向）；`convertReadingForHanyuPinyinDisplay(_:isHanyuPinyin:)` 供**未完成**讀音（窗頂 pane、混打 Tooltip 之讀音行）——**逐字同組字區讀音欄**（數字標調附尾、`ü` 作 `v`、不補陰平）、不問方向。混打 Tooltip 之 ASCII 原文不得回填（其住讀音欄）。
 - **★ 混打之讀音量測不拘狂打開關；顯示路徑不得只讀注拼槽（2026-09-29，P278）**：`mixedAlnumBufferPendingReading` 為核心量測，`mixedAlnumPendingReading` ＝其加掛併存閘（狂打素材用）。注拼槽僅為緩衝之投影、於「整段未被詞庫採納」時即被打字機清空 ⇒ 混打 Tooltip 之讀音預覽必須取緩衝側之量測（`su;`⇒`niang`），否則整窗無讀音可示。
 - **★ 並存態之空白鍵歸屬須有單一正本；Shift+Space 為 ASCII 逃生口（2026-09-30，P280）**：混打＋注音狂打並存時一律取 `MixedAlnumSpaceDuty`（分診早段之固化塊與打字機共用之）——待調讀音者＝陰平確認、帶 Shift 者＝放棄注音、遞交整段 ASCII ＋ 半形空格；新修飾鍵維度不得再於兩處各寫一份運算式。逃生口之遞交須**先取出原文再清空緩衝**，否則 `committableDisplayText` 會把 copilot 對該讀音之投機預覽一併遞交（`su`＋Shift+Space 得 `你su `）。
+- **★ `shortcuts.html` 係產物、不得手改（2026-10-06，P284）**：app 內鍵盤熱鍵手冊之 zh-Hant／zh-Hans 兩份全由 `vChewing-macOS/Scripts/Markdown2HTML/` 之三支 Swift 腳本產製——產製器自持 HTML 骨架與樣式，`make shortcuts` 產出、`shortcutsCheck` 驗新舊。**繁體中文之權威原文係官網倉 `vChewing-HomePage.io/manual/shortcuts.md`**（本倉 `Resources/shortcuts-src/shortcuts.zh-Hant.md` 為其同步副本）；簡中版由該副本推得（只簡化字形、語彙守 zh-Hans-TW）。**`en`／`ja` 仍為手寫、不在工具鏈內**，重跑產製器不會動它們；`shortcuts-src/` 隨 lproj 一併進 app bundle。注意此為**本倉唯一以官網倉為正本之出貨內容**——改字先落官網倉。
+
 ### 12.7 記述預算與骨架（House Style；2026-09-27 訂，事主指示）
 
 > **適用起點**：**P262 起為當然適用**。**P241–P261 已於 2026-09-27 依事主第二次指示回溯套用**（21 篇全數改寫，實績見 12.7.6）；**P240 及以前之各卷不回改**，稽核工具一律列為 `legacy（不判）`。
