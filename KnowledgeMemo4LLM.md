@@ -34,7 +34,7 @@
 **LibVanguard**（先鋒引擎）是 vChewing Project 下一代輸入法的引擎的核心套件庫，以 Swift Package 形式提供。專案採用 LGPL v3.0 授權（`SwiftExtension` 模組例外：自 2026-09-13 起採 `MulanPSL-2.0`，見 `LICENSES/preferred/MulanPSL-2.0` 與 `COPYING`），涵蓋從注音符號解析、辭典樹查詢、語言模型聚合、到組字引擎的完整輸入法管線（pipeline）。
 
 - **Swift 工具版本**：**Swift 6.4+**（6.2／6.3 為封堵對象——各套件之 `Package@swift-6.2.swift`／`6.3.swift` 以 `#error` 明文拒絕該兩版，理由見 §10.5 末段）；另備 **Swift 5.10.1**（open-source toolchain）供 macOS 10.9 legacy 側建置——自 Phase 216 起本倉具雙 toolchain 建置能力、Phase 217 起**推及 `vChewing-macOS` 全倉**，建置行為隨 toolchain 版本而異（見 §十）。
-- **最低平台支援**：現行側 macOS 12（**.macOS(.v12)**）——自 Phase 213 起承襲 `vChewing-macOS` 的 `LibVanguard` 設定（原為 macOS 15 / macCatalyst 18 / iOS 18 / visionOS 2，事主裁定現階段一律承襲 macOS 側）；**5.10（legacy）側之 manifest 刻意不宣告平台（`platforms: nil`）、部署目標為 `x86_64-apple-macosx10.9`**（PackageDescription 能宣告的 macOS 最低值只有 10.10，一宣告即被明文寫入產物，索性不宣告；地板由 makefile 之 `-Xswiftc -target` 與 legacy 連結端決定。早前記為「`Data` 標為 macOS 10.10 起、故 `10.9` 不存在」——該說已經重測推翻——詳見 §十）。
+- **最低平台支援**：現行側 macOS 12（**.macOS(.v12)**）——自 Phase 213 起承襲 `vChewing-macOS` 的 `LibVanguard` 設定（原為 macOS 15 / macCatalyst 18 / iOS 18 / visionOS 2，事主裁定現階段一律承襲 macOS 側；**iOS 側自 P289 起明文宣告 `.iOS(.v27)`**——支援帶 iOS 27+，免去 iOS 18 為止之 non-liquid-glass 鍵盤邊框相容勞力）；**5.10（legacy）側之 manifest 刻意不宣告平台（`platforms: nil`）、部署目標為 `x86_64-apple-macosx10.9`**（PackageDescription 能宣告的 macOS 最低值只有 10.10，一宣告即被明文寫入產物，索性不宣告；地板由 makefile 之 `-Xswiftc -target` 與 legacy 連結端決定。早前記為「`Data` 標為 macOS 10.10 起、故 `10.9` 不存在」——該說已經重測推翻——詳見 §十）。
 - **跨平台目標**：保持對 Linux 與 Windows 的可建置性（透過 `#if canImport(Darwin)` 條件編譯平台限制）。
 - **出貨產物**：**（6.4+ 側）單一動態庫 `libVanguard.dylib`**（manifest 之 `package.name = "LibVanguard"` 而 product 名為 `Vanguard`）。**聚合靶與其測試靶自 2026-09-14 第二輪起亦更名**為 `LibVanguard` / `LibVanguardTests`（原 `OSNeutralAssembly` / `OSNeutralAssemblyTests`），故 `import LibVanguard`；其餘模組名（`Homa`、`TrieKit`、`LexiconAssembly` 等）不變。SwiftPM 的資源 bundle 名取**套件名**，故實為 `LibVanguard_*.bundle`。**兩倉（本倉與 `vChewing-macOS`）自此 `Package.swift` 逐位元組相同、`Sources/` 全等**。**（5.10 側，自 Phase 216 起）兩顆均為 static 之產物**：`libVanguard.a`（聚合體，14 MB）與 `libVanguardSwiftExtension.a`（子套件，540 KB）；`.a` 係純 `ar` 封存、不帶任何 load command，故 minOS 不進產物。
 - **角色（事主 2026-09-14 定調）**：本倉現為**實驗田**；`vChewing-macOS` 仍消費自己的 `Packages/vChewing_OSNeutral_LibVanguard`，兩者自此是「逐位元組同源、各自獨立」的兩份副本。LibVanguard 對 macOS 的**向前建置能力**屬後續 phase（**自 Phase 216 起開始落地**：5.10／legacy 側之雙 toolchain 建置已可行，見 §10.5）。
@@ -403,8 +403,11 @@ Megrez 的繼任者，實現漢字組句動態規劃演算法。
 ### 10.2 建置指令
 
 ```bash
-swift build
+swift build   # 6.4+ 側（macOS、debug）
+make iOS      # iOS 27 側（release、arm64 device）：產物 libVanguard.dylib、platform IOS／minos 27.0
 ```
+
+> **`make iOS`（P289 起）**：只出 `Vanguard` 一個產品（另兩者為測試素材靶，release 建不出——見 §12.6）。SDK／triple／產品／scratch／旗標皆為變數：模擬器為 `make iOS IOS_SDK=iphonesimulator IOS_TRIPLE=arm64-apple-ios27.0-simulator IOS_SCRATCH=.build/.ios-sim`；本機 harness 內另須補 `IOS_FLAGS=--disable-sandbox`（同 §10.5 之舊例，該旗標不寫死於 makefile）。`clean-iOS` 清其 scratch。
 
 ### 10.3 測試指令
 
@@ -664,6 +667,9 @@ make clean510               # 清兩條 scratch
 - **★ 「顯示什麼」與「遞交什麼」須由同一取值鏈導出（2026-10-06，P287）**：組字區顯示（`generateStateOfInputting`）與遞交取文（`committableDisplayText`）各推一次「未完成讀音」⇒ 並存態下顯示取混打緩衝原文、遞交取 copilot 之投機預覽（`su` 得 `你你泥su`），且緩衝原文被插入兩次（`abcabc`）。P280 只在一個站點補救，其餘四個同型站點遂照病。**凡「該顯示什麼」與「該遞交什麼」分屬兩函式者，須令後者取前者之來源**（或令兩者共用同一私有取值鏈），並以靶守住；同理，凡「某物之原文由呼叫端追加」之約定，插入端即不得再插入之。
 - **★ `shortcuts.html` 係產物、不得手改（2026-10-06，P284；P285 擴及四語系）**：app 內鍵盤熱鍵手冊之**四份**全由 `vChewing-macOS/Scripts/Markdown2HTML/` 之三支 Swift 腳本產製——產製器自持 HTML 骨架與樣式，`make shortcuts` 產出、`shortcutsCheck` 驗新舊。**繁體中文之權威原文係官網倉 `vChewing-HomePage.io/manual/shortcuts.md`**（本倉 `Resources/shortcuts-src/shortcuts.zh-Hant.md` 為其同步副本）；簡中版由該副本推得（只簡化字形、語彙守 zh-Hans-TW）；`en`／`ja` 為同目錄之**手寫**原稿（P285 自舊 HTML 逆推而得），改繁中後須**手工**補譯、無機器翻譯步驟。四份之首列版本號皆自繁中原文抽出，故不可能互相矛盾。`shortcuts-src/` 隨 lproj 一併進 app bundle。注意此為**本倉唯一以官網倉為正本之出貨內容**——改字先落官網倉。
 - **★ 窗體縮放動畫期間，繪製之矩形一律取視圖當下之 `bounds`，不得取佈局之終值（`fittingSize`／`metrics`）（2026-10-06，P288）**：終值在動畫起步時即已是最終尺寸，取之則收縮時該矩形提前收妥、窗體尚未及之部分留下一條未著色之破口（其下之 effectiveView／glass 遂透出）；生長時則圓角被裁掉。**背景視圖若以 Auto Layout 釘齊容器，於 `setFrame` 前手動指派 frame 毫無作用**——下一拍即被版面配置覆蓋（實測 480→160→480）。
+- **★ 行程級之系統 API 一律住 `OSUtils`，不得再以 extension 掛在 Foundation 型別上（2026-10-06，P289）**：`Process` 在 iOS 上**根本不存在**（該型別專供 macOS 生成子行程）⇒ 舊制之 `Process.consoleLog`／`Process.isAppleSilicon`／`Process.totalMemoryGiB` 於 iOS 建不出。三項已遷入中立命名空間 `OSUtils`（事主定名；兩個 `.dylib` 之公開面，倉外無消費端）；iOS 側唯一之平台分支為 `isAppleSilicon`（`uname` 於 iOS 回機型代號而非 `arm64`）。
+- **★ `swift build -c release` 建不出 `HomaSharedTestComponents`——任何平台皆然（2026-10-06，P289）**：該靶對 `Homa` 之 `@testable import` 只在 `-enable-testing` 之下成立，而該旗標於 debug 由 SwiftPM 自動施加、release 則否（實測：補 `-Xswiftc -enable-testing` 即過；`swift test -c release` 亦過，故基線不受影響）。**只出產品之 release 入口一律以 `--product Vanguard` 收斂**，勿對全靶建置。
+- **★ iconv 之鏈接處置因平台而異（2026-10-06，P289 追記）**：Apple 平台之 `libiconv` 是**獨立 dylib** ⇒ manifest 須明列 `.linkedLibrary("iconv", …)`；glibc／musl 則把 `iconv_open`／`iconv`／`iconv_close` **收在 libc 內**（glibc 之轉換表另以 gconv 模組隨 libc6 供貨）⇒ **Linux 無須任何鏈接設定**；Windows 無 iconv，`CodePointDecoder` 走 `MultiByteToWideChar`（碼頁 54936／936／950）。`IH-InputMode-001`（餵 GB18030 之 `C8D0` 與 Big5 之 `A462`、皆期得「刃」）即 Linux CI 上實際走 iconv 之路徑。**musl（靜態 Linux SDK）之字集覆蓋較窄、若干東亞編碼缺失**，該側之 GB／Big5 解碼可能落回 `nil`（CI 為 glibc、未涵蓋此路）。
 
 ### 12.7 記述預算與骨架（House Style；2026-09-27 訂，事主指示）
 
