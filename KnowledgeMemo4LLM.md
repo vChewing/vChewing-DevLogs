@@ -663,6 +663,7 @@ make clean510               # 清兩條 scratch
 - **★ 並存態之空白鍵歸屬須有單一正本；Shift+Space 為 ASCII 逃生口（2026-09-30，P280）**：混打＋注音狂打並存時一律取 `MixedAlnumSpaceDuty`（分診早段之固化塊與打字機共用之）——待調讀音者＝陰平確認、帶 Shift 者＝放棄注音、遞交整段 ASCII ＋ 半形空格；新修飾鍵維度不得再於兩處各寫一份運算式。逃生口之遞交須**先取出原文再清空緩衝**，否則 `committableDisplayText` 會把 copilot 對該讀音之投機預覽一併遞交（`su`＋Shift+Space 得 `你su `）。
 - **★ 「顯示什麼」與「遞交什麼」須由同一取值鏈導出（2026-10-06，P287）**：組字區顯示（`generateStateOfInputting`）與遞交取文（`committableDisplayText`）各推一次「未完成讀音」⇒ 並存態下顯示取混打緩衝原文、遞交取 copilot 之投機預覽（`su` 得 `你你泥su`），且緩衝原文被插入兩次（`abcabc`）。P280 只在一個站點補救，其餘四個同型站點遂照病。**凡「該顯示什麼」與「該遞交什麼」分屬兩函式者，須令後者取前者之來源**（或令兩者共用同一私有取值鏈），並以靶守住；同理，凡「某物之原文由呼叫端追加」之約定，插入端即不得再插入之。
 - **★ `shortcuts.html` 係產物、不得手改（2026-10-06，P284；P285 擴及四語系）**：app 內鍵盤熱鍵手冊之**四份**全由 `vChewing-macOS/Scripts/Markdown2HTML/` 之三支 Swift 腳本產製——產製器自持 HTML 骨架與樣式，`make shortcuts` 產出、`shortcutsCheck` 驗新舊。**繁體中文之權威原文係官網倉 `vChewing-HomePage.io/manual/shortcuts.md`**（本倉 `Resources/shortcuts-src/shortcuts.zh-Hant.md` 為其同步副本）；簡中版由該副本推得（只簡化字形、語彙守 zh-Hans-TW）；`en`／`ja` 為同目錄之**手寫**原稿（P285 自舊 HTML 逆推而得），改繁中後須**手工**補譯、無機器翻譯步驟。四份之首列版本號皆自繁中原文抽出，故不可能互相矛盾。`shortcuts-src/` 隨 lproj 一併進 app bundle。注意此為**本倉唯一以官網倉為正本之出貨內容**——改字先落官網倉。
+- **★ 窗體縮放動畫期間，繪製之矩形一律取視圖當下之 `bounds`，不得取佈局之終值（`fittingSize`／`metrics`）（2026-10-06，P288）**：終值在動畫起步時即已是最終尺寸，取之則收縮時該矩形提前收妥、窗體尚未及之部分留下一條未著色之破口（其下之 effectiveView／glass 遂透出）；生長時則圓角被裁掉。**背景視圖若以 Auto Layout 釘齊容器，於 `setFrame` 前手動指派 frame 毫無作用**——下一拍即被版面配置覆蓋（實測 480→160→480）。
 
 ### 12.7 記述預算與骨架（House Style；2026-09-27 訂，事主指示）
 
