@@ -384,6 +384,7 @@ Megrez 的繼任者，實現漢字組句動態規劃演算法。
 | `Sources/LexiconAssembly/LXGramSupplyHub.swift` | 多來源元圖供應中樞（Phase 212） |
 | `Sources/LexiconAssembly/SubLMs/LXPerceptor.swift` | 使用者習慣洞察器（POM；原 `Perceptor`） |
 | `Sources/LibVanguard/` | 作業系統中立層（輸入控制器與狀態機；原 `OSNeutralAssembly`） |
+| `vChewing-macOS/Packages/vChewing_MainAssembly4Darwin/Sources/MainAssembly4Darwin/SessionController/SessionControllerSputnik.swift` | Darwin 側 IMK 回呼轉發（14 個類別層級 block）：controller 位址 → parity session 之解析、啟用／停用、`recognizedEvents` 與 `handleEvent`；查無 session 之四處分支留有 `UnresolvableController:` 日誌（Phase 291） |
 | `Tests/LexiconAssemblyTests/` | POM 測試族之大本營（含本倉獨有之 `POMDecayWindowTests.swift`／`LXPlainBopomofoEtenDOSTests.swift`） |
 | `vChewing-macOS/ValueAdd/WebConfigAssistant/` | 配置助手（Phase 241；**Phase 246 起免除 node／npm**）：TypeScript ＋ JXA 宿主、外部相依只有 `tsc`（**須原生版**）、單檔自足 HTML；入內跑 `make audit`／`make bundle`；建置與部署細節見該目錄之 `README.md` |
 | `Sources/vChewingSharedCLI/VCSharedCLI_UserDefMetadata.swift` | `dump-userdef-metadata` 動詞（Phase 241）：導出 118 條 `UserDef` 之後設資料與四語系標籤，供助手防漂移；`--strict` 為 i18n 稽核 |
@@ -673,6 +674,9 @@ make clean510               # 清兩條 scratch
 - **★ 行程級之系統 API 一律住 `OSUtils`，不得再以 extension 掛在 Foundation 型別上（2026-10-06，P289）**：`Process` 在 iOS 上**根本不存在**（該型別專供 macOS 生成子行程）⇒ 舊制之 `Process.consoleLog`／`Process.isAppleSilicon`／`Process.totalMemoryGiB` 於 iOS 建不出。三項已遷入中立命名空間 `OSUtils`（事主定名；兩個 `.dylib` 之公開面，倉外無消費端）；iOS 側唯一之平台分支為 `isAppleSilicon`（`uname` 於 iOS 回機型代號而非 `arm64`）。
 - **★ `swift build -c release` 建不出 `HomaSharedTestComponents`——任何平台皆然（2026-10-06，P289）**：該靶對 `Homa` 之 `@testable import` 只在 `-enable-testing` 之下成立，而該旗標於 debug 由 SwiftPM 自動施加、release 則否（實測：補 `-Xswiftc -enable-testing` 即過；`swift test -c release` 亦過，故基線不受影響）。**只出產品之 release 入口一律以 `--product Vanguard` 收斂**，勿對全靶建置。
 - **★ iconv 之鏈接處置因平台而異（2026-10-06，P289 追記）**：Apple 平台之 `libiconv` 是**獨立 dylib** ⇒ manifest 須明列 `.linkedLibrary("iconv", …)`；glibc／musl 則把 `iconv_open`／`iconv`／`iconv_close` **收在 libc 內**（glibc 之轉換表另以 gconv 模組隨 libc6 供貨）⇒ **Linux 無須任何鏈接設定**；Windows 無 iconv，`CodePointDecoder` 走 `MultiByteToWideChar`（碼頁 54936／936／950）。`IH-InputMode-001`（餵 GB18030 之 `C8D0` 與 Big5 之 `A462`、皆期得「刃」）即 Linux CI 上實際走 iconv 之路徑。**musl（靜態 Linux SDK）之字集覆蓋較窄、若干東亞編碼缺失**，該側之 GB／Big5 解碼可能落回 `nil`（CI 為 glibc、未涵蓋此路）。
+
+- **★ IMK 回呼路徑上「查無 session」之分支不得靜默（2026-10-09，P291 客訴 #618 之實證）**：`SessionControllerSputnik` 之 `activateServer`／`deactivateServer`／`recognizedEvents`／`handleEvent` 四處，原在 `session(forAddr:)` 回 nil 時逕回中性值（0／false／nothing）⇒ 日誌上與「事件根本未投遞」同形，無從定案。凡此類降級分支一律走 `logUnresolvableController(_:at:)`，印 addr／`isAddressAlive`／gen／`trackedControllerCount`。
+- **★ `IMKInputSessionController` 之兩條現行行為（2026-10-09，P291 實查）**：`-deactivateServer:` 後 3.0 秒，`-IMKSwift_delayedDealloc` 即對該 controller 無條件呼叫 `terminateForClientXPCConn:`（客體在 3 秒內回到前景，方由 `-activateServer:` 取消）；`+IMKSwift_pruneStaleControllersOnServer:excludingSelf:` 自 `8a734b4d` 起**無 count 門檻**，每次新 controller 初始化即剔除一個最舊且非 `_currentController`、非自身者。
 
 ### 12.7 記述預算與骨架（House Style；2026-09-27 訂，事主指示）
 
