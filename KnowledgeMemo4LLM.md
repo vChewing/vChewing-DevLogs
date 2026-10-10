@@ -687,6 +687,8 @@ make clean510               # 清兩條 scratch
 - **★ 拼音對照表之方向：key＝拼音、value＝注音——勿信屬性名（2026-10-11，P297 實證）**：`mapHanyuPinyin` 等六表皆然（起首如 `"chuang": "ㄔㄨㄤ"`）；`MandarinParser.mapZhuyinPinyin` 之名讀不出方向、其內容即「拼音→注音」。`PinyinTrie.init` 之註釋曾反寫此方向（自 C++ 側謄抄時兩詞互易，`f4cfcbc3` 引入，P297 訂正）。
 - **★ 換裝輸入法時「殺舊行程」須在換檔之後、且須驗證（2026-10-11，P298 實證）**：IMK 隨選啟動、永遠自磁碟上已註冊之 bundle 拉起 ⇒ 換檔**前**殺只會讓系統把舊碼重新拉起（新 PID、舊碼），恰好躲過其後一切檢查（實測：舊 legacy 行程在新碼就位後仍服務近 30 秒）。postcondition 不可寫「沒有行程」（必被重拉），須為「**那批捕捉到的 PID 皆已消失**」；`killall` 之結束碼從前未經檢查，不構成保證。
 - **★ IMK 之 Legacy／Modern 分身由 `+subclass` 挑選、與建置 SDK 無關（2026-10-11，P298 副產物）**：`[IMKServer subclass]` → `_IMKServerLegacy`、`[IMKClient subclass]` → `IMKClient_Modern`；唯音以 `IMKServer(name:bundleIdentifier:)` 建 server，故 server 端走 Legacy。實測 legacy（sdk 13.3）與 modern（sdk 27.0）兩建置之事件堆疊皆「每事件 2 幀 `_IMKServerLegacy`、裝飾層 0 次」⇒ 建置 SDK 不影響 IMK 傳輸路徑。
+- **★ 私面干涉之診斷開關須「決策當下求值」、不得快取（2026-10-11，P299）**：`IMKSwift` 對 `IMKServer` 之三項干涉皆有對應鍵（`_IMKSwift_disableServerControllerPruning`／`_disableClientWrapperTermination`／`_disableDelayedDeallocation`；`UserDef` 之 `rawValue` 以單底線開頭合法，雙底線保留給偏好交換之中介鍵），由 Swift 端安裝回傳 `BOOL` 之 block、ObjC 端每次決策都回呼 ⇒ 使用者可在失靈當下翻開關做因果判定，無須換版重裝；未安裝之 block 一律視為「未停用」＝出貨行為。
+- **★ 共用層（`Sources/Shared`）之改動須兩倉同源、逐位元組相同（2026-10-11，P299 補記）**：`UserDef`／`PrefMgrProtocol`／`PrefMgr_Core` 三檔同時存在於正本 `vChewing-LibVanguard` 與消費側 `vChewing-macOS/Packages/vChewing_OSNeutral_LibVanguard`（「各自獨立、同源」之兩份副本）——任改一側後須 `diff -q` 逐檔複核、並於另一倉補一筆同源 commit（P299：`c12b6f45` ↔ `281fdcb`）。**漏改一側不會有任何建置或測試徵兆**（macOS 側照樣全綠），唯賴顯式比對。
 
 ### 12.7 記述預算與骨架（House Style；2026-09-27 訂，事主指示）
 
