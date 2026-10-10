@@ -685,6 +685,8 @@ make clean510               # 清兩條 scratch
 - **★ 診斷日誌只寫在失敗分支上不足；成功路徑亦須記身分（2026-10-10，P296 客訴 #618）**：事件型別層級之失蹤（同一時段 keyDown 有、flagsChanged 全無）無法由「查無 session」之降級日誌看出。回呼進入點一律印 controller 位址、`isAddressAlive`、generation、解析所得 session 之已指派位址與 client bundle id——三者一比即可分「未進入」「位址已除名」「被路由到別枚 controller」。
 - **★ `IMKInputSessionController` 之兩條現行行為（2026-10-09，P291 實查）**：`-deactivateServer:` 後 3.0 秒，`-IMKSwift_delayedDealloc` 即對該 controller 無條件呼叫 `terminateForClientXPCConn:`（客體在 3 秒內回到前景，方由 `-activateServer:` 取消）；`+IMKSwift_pruneStaleControllersOnServer:excludingSelf:` 自 `8a734b4d` 起**無 count 門檻**，每次新 controller 初始化即剔除一個最舊且非 `_currentController`、非自身者。
 - **★ 拼音對照表之方向：key＝拼音、value＝注音——勿信屬性名（2026-10-11，P297 實證）**：`mapHanyuPinyin` 等六表皆然（起首如 `"chuang": "ㄔㄨㄤ"`）；`MandarinParser.mapZhuyinPinyin` 之名讀不出方向、其內容即「拼音→注音」。`PinyinTrie.init` 之註釋曾反寫此方向（自 C++ 側謄抄時兩詞互易，`f4cfcbc3` 引入，P297 訂正）。
+- **★ 換裝輸入法時「殺舊行程」須在換檔之後、且須驗證（2026-10-11，P298 實證）**：IMK 隨選啟動、永遠自磁碟上已註冊之 bundle 拉起 ⇒ 換檔**前**殺只會讓系統把舊碼重新拉起（新 PID、舊碼），恰好躲過其後一切檢查（實測：舊 legacy 行程在新碼就位後仍服務近 30 秒）。postcondition 不可寫「沒有行程」（必被重拉），須為「**那批捕捉到的 PID 皆已消失**」；`killall` 之結束碼從前未經檢查，不構成保證。
+- **★ IMK 之 Legacy／Modern 分身由 `+subclass` 挑選、與建置 SDK 無關（2026-10-11，P298 副產物）**：`[IMKServer subclass]` → `_IMKServerLegacy`、`[IMKClient subclass]` → `IMKClient_Modern`；唯音以 `IMKServer(name:bundleIdentifier:)` 建 server，故 server 端走 Legacy。實測 legacy（sdk 13.3）與 modern（sdk 27.0）兩建置之事件堆疊皆「每事件 2 幀 `_IMKServerLegacy`、裝飾層 0 次」⇒ 建置 SDK 不影響 IMK 傳輸路徑。
 
 ### 12.7 記述預算與骨架（House Style；2026-09-27 訂，事主指示）
 
