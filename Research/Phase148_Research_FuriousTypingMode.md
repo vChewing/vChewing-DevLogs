@@ -634,7 +634,7 @@ Homa／LM 零破壞。
 
 ### 8.5 P149 施術後備忘（2026-08-26 補記）
 
-P149 已完工（macOS `8347ea2c`／Legacy `1da063ec`）：方案 A′ 核心子集落地——隱藏 pref
+P149 已完工（macOS `6e044c85`／Legacy `1da063ec`）：方案 A′ 核心子集落地——隱藏 pref
 `furiousTypingEnabled`、Tekkon `zhuyinReadings(forPinyinFragment:)`、Typewriter
 `furiousTypingPreviewedReading`（無狀態暫態組句）＋ Enter 直遞預覽；詳見
 `vChewing-DevLogs/Reqs4LLM/Archive_P101-P200/Reqs_0141-0150.md` Phase 149。

@@ -18,7 +18,7 @@
 - **「有抵達可解析 session 之 flagsChanged 必留痕」在 4.8.6 亦成立**：`Packages/vChewing_MainAssembly4Darwin/Sources/MainAssembly4Darwin/SessionController/SessionControllerSputnik.swift:150-164`（4.8.6）之 nil 分支靜默；`Packages/vChewing_OSNeutral_LibVanguard/Sources/LibVanguard/Session/InputSession_HandleEvent.swift:33-58` 之 shift／caps 命中各自印字，未命中則落到 `handleKeyDown` 之 `if event.isFlagChanged { return false }` ⇒ 必印 `OmitNSEvent`。
 - 唯音自身（HEAD 與 4.8.6）**無任何 CGEventTap／`addGlobalMonitor`** ⇒ 唯音不可能自行吞掉 flagsChanged。
 - 4.8.6 已有 parity 雙緩衝池（`InputSession.swift` 之 `sessionEven`／`sessionOdd`）。
-- **版本字串無法區分**：build 4870 同時見於 tag `4.8.7`（`ec4e64aa`，2026-10-07）與 HEAD（`Release-Version.plist`／`Update-Info.plist`／`vChewing.xcodeproj/project.pbxproj`／`ValueAdd/WebConfigAssistant/version.txt`）⇒ 夜版是否含 P291 只能由發版時間推斷（P291 兩筆 commit 為 2026-10-09 14:22 +0800）。
+- **版本字串無法區分**：build 4870 同時見於 tag `4.8.7`（`fe51778f`，2026-10-07）與 HEAD（`Release-Version.plist`／`Update-Info.plist`／`vChewing.xcodeproj/project.pbxproj`／`ValueAdd/WebConfigAssistant/version.txt`）⇒ 夜版是否含 P291 只能由發版時間推斷（P291 兩筆 commit 為 2026-10-09 14:22 +0800）。
 
 ## 2. 判定樹（P296 版）
 

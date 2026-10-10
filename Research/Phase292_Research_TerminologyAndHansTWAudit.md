@@ -3,7 +3,7 @@
 > 本檔為 Phase 292 之長篇推導、逐處清單與量測，依備忘錄 §12.7.2 自 Reqs 卷抽出（`Research/` 不計入 Phase 篇預算）。
 > 卷內之 Phase 篇僅留取捨、證據與界線，並指向本檔。
 >
-> 狀態：完工（2026-10-09／2026-10-10）｜各倉最終形＝`vChewing-macOS` `373ccd81`＋`540fc1b3`／`vChewing-LibVanguard` `6b0188b`／`vChewing-HomePage.io` `1b5816f`（事主重製，母 `040b280`）／`Tekkon` `ef40f0d`／`TekkonCC` `a80b8e4`／`TekkonNT` `8187ae4`／本卷 `Reqs_0291-0300.md`（母 `5fbf45e`）。
+> 狀態：完工（2026-10-09／2026-10-10）｜各倉最終形＝`vChewing-macOS` `dfc9d2f2`＋`6ddb0a3b`／`vChewing-LibVanguard` `6b0188b`／`vChewing-HomePage.io` `1b5816f`（事主重製，母 `040b280`）／`Tekkon` `ef40f0d`／`TekkonCC` `a80b8e4`／`TekkonNT` `8187ae4`／本卷 `Reqs_0291-0300.md`（母 `5fbf45e`）。
 
 ## 1. 緣起（事主逐字，依時序）
 
@@ -57,7 +57,7 @@
 
 ## 7. 整併（monocommit）
 
-- 事主整併之六倉：`vChewing-macOS` `373ccd81`（45 檔）、`vChewing-LibVanguard` `6b0188b`（28 檔）、`vChewing-HomePage.io` `aa14ec7`（25 檔；其後重製為 `040b280`／squash 為 `1b5816f`）、`Tekkon` `ef40f0d`（7 檔）、`TekkonCC` `a80b8e4`（11 檔）、`TekkonNT` `8187ae4`（7 檔）。抽查確認各 monocommit 皆已含本案全部落點（含三處 Swift 副本之「BackSpace 後按空白鍵」、`Typewriter_BPMFFullMatch.swift:237` 之「讀音完成（聲調鍵／空白鍵）」、`Tekkon` 之 16／426 更正）。
+- 事主整併之六倉：`vChewing-macOS` `dfc9d2f2`（45 檔）、`vChewing-LibVanguard` `6b0188b`（28 檔）、`vChewing-HomePage.io` `aa14ec7`（25 檔；其後重製為 `040b280`／squash 為 `1b5816f`）、`Tekkon` `ef40f0d`（7 檔）、`TekkonCC` `a80b8e4`（11 檔）、`TekkonNT` `8187ae4`（7 檔）。抽查確認各 monocommit 皆已含本案全部落點（含三處 Swift 副本之「BackSpace 後按空白鍵」、`Typewriter_BPMFFullMatch.swift:237` 之「讀音完成（聲調鍵／空白鍵）」、`Tekkon` 之 16／426 更正）。
 - 本卷：原四筆 P292 commit（`dc979a9`／`32028de`／`e262a3b`／`f772746`）以 `git reset --soft 5fbf45e` 整併為單一 commit，樹內容與整併前逐位元組相同（`git diff` 為空）。其後追加稽核與事主後續處置再整併一次（母 `5fbf45e`）。
 - **教訓**：`git reset --soft` 不動索引——重整併前必先 `git add`（曾因此產出漏掉編輯之 `e1de409`，已修正為 `e44acf2`）。
 - 效力：卷內各節所記之逐階段 hash 皆已由各倉 monocommit 取代，不再存在於各倉 `main` 之歷史。`vChewing-VanguardLexicon`／`vChewing-Homebrew` 未涉本案，無須整併。
@@ -80,7 +80,7 @@
 3. **標點體例**：西式引號改臺灣引號——`“Documents”`／`“Desktop”`→`「Documents」`／`「Desktop」`（4 處，含助手）、`pkgTextWarning-CHS.txt` 之 `“手动”`→`「手动」`。
 4. **與 zh-Hant 逐字對齊（「只做字元簡化」之要求）**：助手 23 鍵中之其餘（`项目`→`选项` 14 處、`哪些项目`→`哪些问题` 2 處、`当前`→`目前`、`未答的项目`→`未答之项目`、`等）的合法编码`→`等）之合法编码`、`更细致的调整`→`更细致地调整`、`字号`→`字级`）；輸入法側 `若当前前后半径`→`若目前前后半径`、`显示当前使用的打字模式`→`显示目前使用的打字模式`、`将当前注音排列`→`将目前注音排列`、`该回退之 ASCII 缓冲即`→`…缓冲区即`；`README-CHS.md` 之 `内部文件时间戳`→`内部档案时间戳`、`发布`→`发行`、`这样一来`→`如此一来`、`本体之建置相依`→`本体的建置相依`。
 
-落點：輸入法 `Sources/vChewingIME_macOS/Resources/zh-Hans.lproj/Localizable.strings` 15 鍵；安裝程式 `Sources/Installer_macOS/Resources/zh-Hans.lproj/Localizable.strings` 3 鍵；助手 `ValueAdd/WebConfigAssistant/src/i18n.ts` zh-Hans 區塊（144 鍵）之 23 鍵；助手後設資料（`make metadata-update` 重生）12 欄；`README-CHS.md` 5 行；`ValueAdd/PKGInstallerAssets/pkgTextWarning-CHS.txt` 1 行 ⇒ 6 檔、＋59／−59，提交 `vChewing-macOS` `540fc1b3`。
+落點：輸入法 `Sources/vChewingIME_macOS/Resources/zh-Hans.lproj/Localizable.strings` 15 鍵；安裝程式 `Sources/Installer_macOS/Resources/zh-Hans.lproj/Localizable.strings` 3 鍵；助手 `ValueAdd/WebConfigAssistant/src/i18n.ts` zh-Hans 區塊（144 鍵）之 23 鍵；助手後設資料（`make metadata-update` 重生）12 欄；`README-CHS.md` 5 行；`ValueAdd/PKGInstallerAssets/pkgTextWarning-CHS.txt` 1 行 ⇒ 6 檔、＋59／−59，提交 `vChewing-macOS` `6ddb0a3b`。
 
 ### 8.3 驗證
 
