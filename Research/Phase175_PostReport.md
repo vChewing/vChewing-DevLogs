@@ -20,7 +20,7 @@
 | 套件最終規模 | 35 檔、7 個外部套件依賴、可獨立 `swift build`（含 debug 用 executable 情境） |
 | 兩倉鏡像 | macOS `SettingsUIHost` 帶 `@MainActor`；legacy 去 `@MainActor` 方言；`PrefMgr_Singleton.swift` legacy 保留原位（行為等價） |
 | 驗證 | macOS root build ✅、MainAssembly4Darwin 69/69 ✅、`vChewing_SettingsUI` 獨立 build ✅；Legacy `make debug-core` ✅ |
-| commit | macOS `64ffa70a`、Legacy `3dde9410`（同訊息「SettingsUI // Put all assets into a single Swift package module.」） |
+| commit | macOS `8636a8a3`、Legacy `3dde9410`（同訊息「SettingsUI // Put all assets into a single Swift package module.」） |
 
 ---
 
@@ -170,7 +170,7 @@ macOS 的 `SettingsUIHost` 標 `@MainActor`（Swift 6 default isolation）；leg
 - macOS：root `swift build` ✅、`vChewing_SettingsUI` 獨立 `swift build` ✅（35 檔）、MainAssembly4Darwin **69/69** ✅（含測試端 `wireUp()`）
 - Legacy：`make debug-core` BUILD SUCCEEDED ✅（含 pbxproj 新檔與 delegate group 遷移）
 - 兩倉 `make lint; make format` 後還原無關 churn（本機 SwiftLint 版本漂移、P159 前例）、diff 僅含手術檔案；新檔 swiftformat 冪等（0/34）
-- commit：macOS `64ffa70a`、Legacy `3dde9410`（同訊息「SettingsUI // Put all assets into a single Swift package module.」，兩波內容皆併入）
+- commit：macOS `8636a8a3`、Legacy `3dde9410`（同訊息「SettingsUI // Put all assets into a single Swift package module.」，兩波內容皆併入）
 - LibVanguard：P175 文件記錄（Reqs／DevReqsHistory／KnowledgeMemo／本 PostReport）皆位於 vChewing-DevLogs 目錄、隨 LibVanguard HEAD aggregate，不另記 commit hash
 - 本報告（`Phase175_PostReport.md`）為新檔，commit 待事主確認
 - 註：對話進行中所見 macOS commit 一度為 `566f2a33`，經事主 amend 後為現況 `64ffa70a`，以現況為準

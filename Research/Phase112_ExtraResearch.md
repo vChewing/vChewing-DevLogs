@@ -29,7 +29,7 @@
 
 **影響範圍**：IMKSwift.m 內的 13 個 block properties
 
-在 HEAD~1 (`85fbd7dc`)，`IMKSwift_delayedDealloc` 是空方法：
+在 HEAD~1 (`fd2b55ab`)，`IMKSwift_delayedDealloc` 是空方法：
 ```objc
 // HEAD~1 — 空實作
 - (void)IMKSwift_delayedDealloc {}

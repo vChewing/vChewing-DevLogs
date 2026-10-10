@@ -17,7 +17,7 @@
 | Darwin 表面留守 | `InputSession_DarwinSurface.swift`＋`SessionHostWiring.swift`（MainAssembly4Darwin） |
 | Linux／WinNT 可編譯 | ✅（CI 實證；含一次 `NSAttributedString` Darwin-ism 修復） |
 | 兩倉鏡像一致 | portable 檔逐字節相同（僅 `@MainActor`／`nonisolated deinit` 方言差） |
-| commit | macOS `539ee616`、Legacy `36b7fdb0`（LibVanguard 文件隨 HEAD aggregate） |
+| commit | macOS `6086f3cb`、Legacy `36b7fdb0`（LibVanguard 文件隨 HEAD aggregate） |
 
 ---
 
@@ -157,5 +157,5 @@
 - Linux（`x86_64-unknown-linux-gnu`，Swift 6.3.3）／WinNT CI 全數通過 ✅（Linux 實編實證第四節修復）
 - macOS 26 / Xcode 26.6 CI ✅
 - 兩倉 `make lint; make format` 後重建 ✅、diff 僅含手術檔案
-- commit：macOS `539ee616`、Legacy `36b7fdb0`（同訊息「Typewriter // Absorb the OS-independent part of Session.」）；
+- commit：macOS `6086f3cb`、Legacy `36b7fdb0`（同訊息「Typewriter // Absorb the OS-independent part of Session.」）；
   LibVanguard 文件隨 HEAD aggregate、不另記 commit hash
