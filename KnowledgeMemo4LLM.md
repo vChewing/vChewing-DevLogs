@@ -680,6 +680,7 @@ make clean510               # 清兩條 scratch
 - **★ iconv 之鏈接處置因平台而異（2026-10-06，P289 追記）**：Apple 平台之 `libiconv` 是**獨立 dylib** ⇒ manifest 須明列 `.linkedLibrary("iconv", …)`；glibc／musl 則把 `iconv_open`／`iconv`／`iconv_close` **收在 libc 內**（glibc 之轉換表另以 gconv 模組隨 libc6 供貨）⇒ **Linux 無須任何鏈接設定**；Windows 無 iconv，`CodePointDecoder` 走 `MultiByteToWideChar`（碼頁 54936／936／950）。`IH-InputMode-001`（餵 GB18030 之 `C8D0` 與 Big5 之 `A462`、皆期得「刃」）即 Linux CI 上實際走 iconv 之路徑。**musl（靜態 Linux SDK）之字集覆蓋較窄、若干東亞編碼缺失**，該側之 GB／Big5 解碼可能落回 `nil`（CI 為 glibc、未涵蓋此路）。
 
 - **★ IMK 回呼路徑上「查無 session」之分支不得靜默（2026-10-09，P291 客訴 #618 之實證）**：`SessionControllerSputnik` 之 `activateServer`／`deactivateServer`／`recognizedEvents`／`handleEvent` 四處，原在 `session(forAddr:)` 回 nil 時逕回中性值（0／false／nothing）⇒ 日誌上與「事件根本未投遞」同形，無從定案。凡此類降級分支一律走 `logUnresolvableController(_:at:)`，印 addr／`isAddressAlive`／gen／`trackedControllerCount`。
+- **★ 診斷日誌只寫在失敗分支上不足；成功路徑亦須記身分（2026-10-10，P296 客訴 #618）**：事件型別層級之失蹤（同一時段 keyDown 有、flagsChanged 全無）無法由「查無 session」之降級日誌看出。回呼進入點一律印 controller 位址、`isAddressAlive`、generation、解析所得 session 之已指派位址與 client bundle id——三者一比即可分「未進入」「位址已除名」「被路由到別枚 controller」。
 - **★ `IMKInputSessionController` 之兩條現行行為（2026-10-09，P291 實查）**：`-deactivateServer:` 後 3.0 秒，`-IMKSwift_delayedDealloc` 即對該 controller 無條件呼叫 `terminateForClientXPCConn:`（客體在 3 秒內回到前景，方由 `-activateServer:` 取消）；`+IMKSwift_pruneStaleControllersOnServer:excludingSelf:` 自 `8a734b4d` 起**無 count 門檻**，每次新 controller 初始化即剔除一個最舊且非 `_currentController`、非自身者。
 
 ### 12.7 記述預算與骨架（House Style；2026-09-27 訂，事主指示）
