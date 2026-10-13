@@ -119,8 +119,8 @@ installer 之所以摸到 `Vanguard`，有三條依賴邊，任一條不斷，`V
 | 路線 | 內容 | 判定 |
 |---|---|---|
 | **甲** | 只在聚合體內新增窄產品，聚合體內部不動 | ❌ 探針 D／E：`libVanguard.dylib` 仍靜態內含，兩份 image |
-| **乙（內化／抄副碼）** | 讓三消費端把所用到的 `SwiftExtension` API 副本抄進自身靶，與聚合體完全脫鉤 | ❌（可做但不採）：因 `OSFrameworkImpl` 用到 `ArrayBuilder`（public 簽名）／`AppProperty`（含 conformance）／`NSMutex`，複製量實質＝**整個 `SwiftExtension`（3 檔 1104 行）**；同名副本＝與甲同一種病且更無保護（與 `Vanguard` 無關、無編譯期與 SwiftPM 層級約束），異名副本＝型別不相容＋永久漂移債。且 P207／P208 才將本模組獨立為 MulanPSL-2.0（理由為「通用工具、應能與其他專案混用」），抄進 AppKit DSL 套件即作廢該獨立性 |
-| **丙／丁（原定）** | 聚合體內新增 dynamic product `VanguardSwiftExtension`，其內部靶以同套件 product 形式取用之 | ❌ 探針 A／D／E：**語法不存在**、且靜默兩份 image |
+| **乙（內化／抄副碼）** | 讓三消費端把所用到的 `SwiftExtension` API 副本抄進自身目標，與聚合體完全脫鉤 | ❌（可做但不採）：因 `OSFrameworkImpl` 用到 `ArrayBuilder`（public 簽名）／`AppProperty`（含 conformance）／`NSMutex`，複製量實質＝**整個 `SwiftExtension`（3 檔 1104 行）**；同名副本＝與甲同一種病且更無保護（與 `Vanguard` 無關、無編譯期與 SwiftPM 層級約束），異名副本＝型別不相容＋永久漂移債。且 P207／P208 才將本模組獨立為 MulanPSL-2.0（理由為「通用工具、應能與其他專案混用」），抄進 AppKit DSL 套件即作廢該獨立性 |
+| **丙／丁（原定）** | 聚合體內新增 dynamic product `VanguardSwiftExtension`，其內部目標以同套件 product 形式取用之 | ❌ 探針 A／D／E：**語法不存在**、且靜默兩份 image |
 | **方案 1（採用）** | `SwiftExtension` **析出為獨立套件**，由該套件出貨 dynamic product `VanguardSwiftExtension`；聚合體與全部消費端以**跨套件** product 取用之 | ✅ 探針 G 已驗證：真動態相倚、單一 image、零副本 |
 
 **方案 1 與 4.7.4 的關係**：4.7.4 的 `Packages/vChewing_SwiftExtension` 出貨的是**static** product `SwiftExtension`；方案 1 只改一處——該產品改為 **dynamic**（否則 `libVanguard.dylib` 會靜態內含、exe 側亦靜態內含，回到兩份 image 且可能觸發 `duplication of library code`）。
@@ -132,7 +132,7 @@ installer 之所以摸到 `Vanguard`，有三條依賴邊，任一條不斷，`V
 ### 5.1 Darwin
 
 - 新套件 `Packages/vChewing_SwiftExtension/`：target `SwiftExtension`（3 檔來源）＋ testTarget `SwiftExtensionTests`；出貨 `.library(name: "VanguardSwiftExtension", type: .dynamic, targets: ["SwiftExtension"])`。
-- 聚合體：`Sources/SwiftExtension/` 與 `Tests/SwiftExtensionTests/` 移出；`Vanguard` 產品的 target 清單移除 `"SwiftExtension"`；5 個內部靶（`ResourceLocator`／`TrieKit`／`Shared`／`LexiconAssembly`／`LibVanguard`）改 `.product(name: "VanguardSwiftExtension", package: "vChewing_SwiftExtension")`。
+- 聚合體：`Sources/SwiftExtension/` 與 `Tests/SwiftExtensionTests/` 移出；`Vanguard` 產品的 target 清單移除 `"SwiftExtension"`；5 個內部目標（`ResourceLocator`／`TrieKit`／`Shared`／`LexiconAssembly`／`LibVanguard`）改 `.product(name: "VanguardSwiftExtension", package: "vChewing_SwiftExtension")`。
 - 三消費端（§2.1 之三條邊）改依賴 `VanguardSwiftExtension`。
 - 結果：`libVanguard.dylib` 以 `LC_LOAD_DYLIB` 相倚 `libVanguardSwiftExtension.dylib`（非內嵌）；installer 只帶後者一顆；IME 帶兩顆但 `SwiftExtension` 恰一份 image。
 
@@ -187,11 +187,11 @@ P214 裁定兩倉 `Package.swift` **逐位元組相同**（`vChewing-macOS/Packa
 **與本文預測不同者（施工後更正）**：
 
 1. **§6 之模組可見性推論需修正**：本文稱「8 個消費端是否需顯式補依賴，須以建置實測判定」。實測結果為**無需補**——SwiftPM 之跨套件模組可見性含遞移依賴，全倉根建置一次通過（12.59 秒），故實際改動的 manifest 只有 3 個（三條邊）＋ 聚合體自身。
-2. **module 名一併更名**：事主於施工中指示「`SwiftExtension` 就得更名為 `VanguardSwiftExtension`」，故不只產品名、連**靶名與模組名**亦更名（`import VanguardSwiftExtension`），源碼檔 `SwiftExtension.swift` → `VanguardSwiftExtension.swift`。這是本文 §五 未載之追加要求。
+2. **module 名一併更名**：事主於施工中指示「`SwiftExtension` 就得更名為 `VanguardSwiftExtension`」，故不只產品名、連**測試目標名與模組名**亦更名（`import VanguardSwiftExtension`），源碼檔 `SwiftExtension.swift` → `VanguardSwiftExtension.swift`。這是本文 §五 未載之追加要求。
 3. **`buildTargetDependencies` 的 result builder 陷阱**：該 builder 在其他元素為字串字面量時，會把 `.product` 的隱式基底推成 `String`（`error: value of type 'String' has no member 'product'`）；**必須顯式寫 `Target.Dependency.product(…)`**。本文未預見。
 4. **非 Darwin 之 `.static` 分流以頂層 `#if` 表達**（而非聚合體那套 ArrayBuilder DSL）——SwiftPM 不容 `#if` 寫進陣列字面量，但**可以**用頂層變數繞過，比為此在第二個 manifest 複製整套 DSL 精簡。
 
-**量化結果**：installer 自身同捆由整條閉包（6.8 MB 級）降為**一顆 383 KB**；`vChewing.app` 為兩顆（6.59 MB ＋ 383 KB）。測試總數守恆：macOS 聚合體 539 → 529（整靶 10 項移出）、新套件 10；LibVanguard 545 → 535 ＋ 10。
+**量化結果**：installer 自身同捆由整條閉包（6.8 MB 級）降為**一顆 383 KB**；`vChewing.app` 為兩顆（6.59 MB ＋ 383 KB）。測試總數守恆：macOS 聚合體 539 → 529（整目標 10 項移出）、新套件 10；LibVanguard 545 → 535 ＋ 10。
 
 **殘留**：`vChewing-OSX-legacy` 依範圍未動，其 TrieKit 副本仍寫 `canImport(SwiftExtension)`（該守衛在該倉恆為 false），使 P200 之「三倉 TrieKit 七檔 sha256 全等」在此一項上失效——列為跨倉同步債。
 

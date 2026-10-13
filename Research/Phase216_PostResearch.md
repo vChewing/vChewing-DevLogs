@@ -29,7 +29,7 @@
 - `Package@swift-6.0.swift` / `Package@swift-6.1.swift`（各 2 份，封堵檔，共 62 行）
 - `makefile`：`LEGACY_*` 五個變數、`build510`、`build510SwiftExtension`、`clean510`，`spmClean` 一併清兩條 scratch，`.PHONY` 同步。
 
-5.10 側 manifest 的四項刻意差異：**產物一律 static**（宿主是 macOS 10.9 的 legacy app，dylib 須提前專門摻 libArcLite）、**`platforms: nil`**（PackageDescription 能宣告的 macOS 最低值只有 10.10，一宣告即被明文寫入產物）、**不含任何測試靶**（單元測試只由 6.2+ 負責，連 `LXAssemblyMaterials4Tests`／`HomaSharedTestComponents` 兩靶一併不宣告）、**不收 `vChewingSharedCLI`**（一次性枴杖，且它是本側唯一會被壓上 minOS 的可執行檔）。另不使用 `.defaultIsolation(MainActor.self)` 等 6.x 才有的設定。因本側不需要任何 `#if`，故**未沿用 `Package.swift` 那套 `@resultBuilder` DSL**。
+5.10 側 manifest 的四項刻意差異：**產物一律 static**（宿主是 macOS 10.9 的 legacy app，dylib 須提前專門摻 libArcLite）、**`platforms: nil`**（PackageDescription 能宣告的 macOS 最低值只有 10.10，一宣告即被明文寫入產物）、**不含任何測試目標**（單元測試只由 6.2+ 負責，連 `LXAssemblyMaterials4Tests`／`HomaSharedTestComponents` 兩目標一併不宣告）、**不收 `vChewingSharedCLI`**（一次性枴杖，且它是本側唯一會被壓上 minOS 的可執行檔）。另不使用 `.defaultIsolation(MainActor.self)` 等 6.x 才有的設定。因本側不需要任何 `#if`，故**未沿用 `Package.swift` 那套 `@resultBuilder` DSL**。
 
 ### 2.（**該 commit 已刪除**）格式化／靜態分析的防線
 
@@ -178,7 +178,7 @@ could not build module 'Darwin' / 'CoreFoundation' / 'Foundation'
 
 ## 七、關鍵洞見：`defaultIsolation`、`@MainActor` 與協定
 
-5.10 側沒有 `defaultIsolation(MainActor.self)`（該 SwiftSetting 是 tools 6.2 起才有），而 6.2 側六個靶（BPMFVS／Shared／BrailleSputnik／LexiconAssembly／LibVanguard／vChewingSharedCLI）都有。這個落差曾以 **1771 筆錯誤**的形式爆發（1052 ＋ 719），看起來像一場硬仗；實則只有**兩個根因**，且一刀可解。
+5.10 側沒有 `defaultIsolation(MainActor.self)`（該 SwiftSetting 是 tools 6.2 起才有），而 6.2 側六個目標（BPMFVS／Shared／BrailleSputnik／LexiconAssembly／LibVanguard／vChewingSharedCLI）都有。這個落差曾以 **1771 筆錯誤**的形式爆發（1052 ＋ 719），看起來像一場硬仗；實則只有**兩個根因**，且一刀可解。
 
 **量測過程**（以 scratch 副本逐層中和）：
 
@@ -260,7 +260,7 @@ could not build module 'Darwin' / 'CoreFoundation' / 'Foundation'
 
 | # | 項目 | 狀態 | 現況、代價與落點 |
 |---|---|---|---|
-| 1 | `Sources/Tekkon/Tekkon_PinyinTrie.swift:110` 的 `nonisolated(unsafe) private static var sharedCache` | **【已裁定保留】** | **不用處理（事主 Q05）**：`Tekkon` 與 `Homa` 兩靶**不在 `defaultIsolation` 名單**（P217 §6.1 實查其 `swiftSettings` 為空），其 `nonisolated(unsafe)` 非但可留、**且與 legacy 倉逐字相同**。原列的兩條路（納入 manifest／搬進 Sendable 盒）皆屬重構，**不做**。落點：P217 §6.4 |
+| 1 | `Sources/Tekkon/Tekkon_PinyinTrie.swift:110` 的 `nonisolated(unsafe) private static var sharedCache` | **【已裁定保留】** | **不用處理（事主 Q05）**：`Tekkon` 與 `Homa` 兩目標**不在 `defaultIsolation` 名單**（P217 §6.1 實查其 `swiftSettings` 為空），其 `nonisolated(unsafe)` 非但可留、**且與 legacy 倉逐字相同**。原列的兩條路（納入 manifest／搬進 Sendable 盒）皆屬重構，**不做**。落點：P217 §6.4 |
 | 2 | 5.10 側 2 個 warning：`InputSession.clientProxyObjectIdentifier`、`PrefMgr.didAskForSyncingLMPrefs`（`Sendable` 一致性 ＋ 可變 stored property） | **【已裁定保留（僅列報）】** | **P217 收工時仍會出現**（實測）。消音只能靠 `nonisolated(unsafe)`（會反過來拆掉 6.2 側隔離）或補 `@MainActor`（違反本檔 §七 之硬約束），**故維持列報**。**驗收門檻是「0 error」，warning 不在門檻內**（P217 §10）。落點：P217 §1.3 之現行處置行 |
 | 3 | 全倉僅存 1 處 `#if compiler(>=6.2)`：`Sources/LexiconAssembly/vChewingLXAssembly_Common.swift:72` 的 `readFileContentAsync`（兩分支僅差 `completion` 的 `@MainActor`） | **【已裁定保留】** | **事主裁定保留**：拿掉它會迫使 5 個呼叫端各自寫 `#if` 差分，成本更高。P217 收工時**仍為 5.10 側全倉唯一一處**。落點：P217 §1.3 之現行處置行 |
 | 4 | `withFileHandleQueue*` 一組 GCD 佇列 | **【已裁定保留】**（**原判「待退役」已被取代**） | **事主 Q06 裁定：`不用退役`**。角色自此定死為「**只管任務觸發時機**」——佇列**不承擔並發**，任務本體一律以 `mainSync {}` 回到 MainActor（**禁用 `{ @MainActor in … }` 等不相容寫法**），並受「**同一檔案不得被多個 actor 同時讀寫**」之約束。**`withFileHandleQueueAsync` 仍為 0 呼叫端之死 API**（P217 實查：全工作區僅剩其自身宣告），惟事主既已裁定不退役，**本檔不再將它列為待辦**。落點：P217 §6.2.1（三條紀律） |
@@ -426,8 +426,8 @@ SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk \
 |---|---|
 | `swift build --build-tests` | **rc=1**；主診斷 **5 段**（1 段出自 `Emitting module LibVanguard`、另 4 段出自檔案編譯階段——同一個 conformance 被重報），含 `error:` 的行**合計 11** |
 | `swift test --no-parallel`（CI 的實際指令） | **rc=1**，同一失敗點、同一診斷 |
-| **中招清單** | ① `InputSession`（`Sources/LibVanguard/Session/InputSession.swift:9:20`，其 conformance 對 `SessionCoreProtocol` 報錯；note 鏈的第一條指向 `CtlCandidateDelegate`）——**首輪只露這一個**；② `InputHandler`（`Sources/LibVanguard/InputHandler/InputHandler.swift:10:34`，conformance 對 `InputHandlerProtocol`）——**把①依編譯器指示補上 `@MainActor` 之後才會露出來**（其 note 鏈為 `conformance depends on main actor-isolated conformance of 'InputSession' to protocol 'SessionCoreProtocol'`）。①②皆補上後，**全倉（含全部測試靶）rc=0、0 error**。⇒ **中招者恰為這兩個 conformance，再無第三個** |
-| 未中招者 | 其餘模組與靶**皆未報同類診斷**：`Shared`／`LexiconAssembly`／`BrailleSputnik`／`BPMFVS`／`Tekkon`／`Homa`／`ResourceLocator`／`TrieKit`／`LXAssemblyMaterials4Tests`／`HomaSharedTestComponents` 在 LibVanguard 之前就已編完（其中不依賴 LibVanguard 的六個測試靶另以 `--target` 逐一驗過，rc=0）；`vChewingSharedCLI` 與依賴 LibVanguard 的三個測試靶則在「②之修補版」的全倉 rc=0 建置中一併編過 |
+| **中招清單** | ① `InputSession`（`Sources/LibVanguard/Session/InputSession.swift:9:20`，其 conformance 對 `SessionCoreProtocol` 報錯；note 鏈的第一條指向 `CtlCandidateDelegate`）——**首輪只露這一個**；② `InputHandler`（`Sources/LibVanguard/InputHandler/InputHandler.swift:10:34`，conformance 對 `InputHandlerProtocol`）——**把①依編譯器指示補上 `@MainActor` 之後才會露出來**（其 note 鏈為 `conformance depends on main actor-isolated conformance of 'InputSession' to protocol 'SessionCoreProtocol'`）。①②皆補上後，**全倉（含全部測試目標）rc=0、0 error**。⇒ **中招者恰為這兩個 conformance，再無第三個** |
+| 未中招者 | 其餘模組與目標**皆未報同類診斷**：`Shared`／`LexiconAssembly`／`BrailleSputnik`／`BPMFVS`／`Tekkon`／`Homa`／`ResourceLocator`／`TrieKit`／`LXAssemblyMaterials4Tests`／`HomaSharedTestComponents` 在 LibVanguard 之前就已編完（其中不依賴 LibVanguard 的六個測試目標另以 `--target` 逐一驗過，rc=0）；`vChewingSharedCLI` 與依賴 LibVanguard 的三個測試目標則在「②之修補版」的全倉 rc=0 建置中一併編過 |
 | 子套件 `Deps/VanguardSwiftExtension` | 單獨 `swift build --build-tests` **rc=0、0 診斷**（子套件**不中招**） |
 | 6.4 對照（預設 toolchain） | `swift build --build-tests` **rc=0、0 error、0 warning**（`Build complete!`）；`swift test --no-parallel` **rc=0、9 套件 535 項全綠**（與 §一 所記「動工前同數」一致） |
 | 5.10 對「編譯器建議的修法」的反應 | `final class C: @MainActor P {}` → `unknown attribute 'MainActor'` ＋ `inheritance from non-protocol, non-class type 'any P'`（同 §五）。**編譯器要的那兩行是 6.2+ 專屬語法，5.10 側不可能同形** |
@@ -506,7 +506,7 @@ SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk \
 
 **判定：三條為同一病灶（✅）。** 三者皆止於同一個 conformance、同一個座標 `:9:20`、同一串 note 鏈（`isolate this conformance to the main actor with '@MainActor'` ＋ `conformance depends on main actor-isolated conformance of 'InputSession' to protocol 'CtlCandidateDelegate'`），且**三條日誌都沒有出現 `InputHandler`**（與 §13.6.3 本機所見的「①先露、②被遮蔽」一致）；三條的失敗步驟 exit code 均為 **1**，日誌尾端均收在 `error: fatalError`。**沒有任何一條是別的病。**
 
-（重報段數 10／13／10 之別，只是各平台 SwiftPM 對同一個 conformance 的重複回報次數、以及 `swift test` 會多編測試靶所致；主體仍是一個 conformance。以 Linux 為例：`error:` 行共 22 ＝ 10 段 ×2 ＋ `emit-module` 1 ＋ `fatalError` 1。）
+（重報段數 10／13／10 之別，只是各平台 SwiftPM 對同一個 conformance 的重複回報次數、以及 `swift test` 會多編測試目標所致；主體仍是一個 conformance。以 Linux 為例：`error:` 行共 22 ＝ 10 段 ×2 ＋ `emit-module` 1 ＋ `fatalError` 1。）
 
 **與 §13.6.3 疑點的對帳（結清，並局部修正原判）**：
 
@@ -535,9 +535,9 @@ SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk \
 
 **來由**：本 phase 之手術把「載入使用者資料」的路徑改為非同步之後，測試出現**時過時不過**的抖動——同一測試在不同次執行間時紅時綠，失敗訊息皆屬「handler 狀態殘留」型（`Early commission is tearing …`／`Commissions missing prefix …`／`mixedAlphanumericalBuffer` 該有值卻是空字串／`narrateCallCount` 該 ≥1 卻是 0）。根因是**測試彼此踩踏行程內全域狀態**（`LXFacade` 的 `factoryTrie`／`lxCassette`、`PrefMgr.shared`、`SessionHost.shared`）。**16 檔、+490/−412**，三件事：
 
-1. **`LibVanguardTests` 靶收進單一 serialized 根**：新增 `LibVanguardTests_Root.swift`（`@Suite("LibVanguardTestsRoot", .serialized)`），把原先四個游離的頂層 suite（`InputHandlerTests`／`FuriousTypingSegmentorTests`／`ResourceProvisionTests`／`RomanNumeralTests`）改寫成巢狀宣告，各 `Cases*.swift` 之 `extension InputHandlerTests` 隨之改為完整路徑。整靶自此落入**同一 serialized 子樹**。`BrailleSputnikTests` 靶原缺 `.serialized`，一併補上。
-2. **`test_IH400_MixedAlnumKanjiInputTest_Izanami` 補上同步載入**：它是全靶唯一跑遍整張注音表、大量觸及 userdata 卻**未**把 `asyncLoadingUserData` 壓成 `false` 的測試（其餘九支磁帶測試皆有）。
-3. **`HomaTests` 之堆積洩漏哨兵改為多次獨立取樣**：`RepeatedRecompositionAllocConvergence` 量的是**全域 malloc 保留區**，其基線受同靶先前測試影響，單次取樣必出現與洩漏無關的瞬態擴張（門檻 4 MB）。改為**獨立取樣至多三次、任一次通過即算通過**——真洩漏會讓每次都超標，故此法只濾噪音、**不放寬門檻**。
+1. **`LibVanguardTests` 目標收進單一 serialized 根**：新增 `LibVanguardTests_Root.swift`（`@Suite("LibVanguardTestsRoot", .serialized)`），把原先四個游離的頂層 suite（`InputHandlerTests`／`FuriousTypingSegmentorTests`／`ResourceProvisionTests`／`RomanNumeralTests`）改寫成巢狀宣告，各 `Cases*.swift` 之 `extension InputHandlerTests` 隨之改為完整路徑。整目標自此落入**同一 serialized 子樹**。`BrailleSputnikTests` 目標原缺 `.serialized`，一併補上。
+2. **`test_IH400_MixedAlnumKanjiInputTest_Izanami` 補上同步載入**：它是全目標唯一跑遍整張注音表、大量觸及 userdata 卻**未**把 `asyncLoadingUserData` 壓成 `false` 的測試（其餘九支磁帶測試皆有）。
+3. **`HomaTests` 之堆積洩漏哨兵改為多次獨立取樣**：`RepeatedRecompositionAllocConvergence` 量的是**全域 malloc 保留區**，其基線受同目標先前測試影響，單次取樣必出現與洩漏無關的瞬態擴張（門檻 4 MB）。改為**獨立取樣至多三次、任一次通過即算通過**——真洩漏會讓每次都超標，故此法只濾噪音、**不放寬門檻**。
 
 **兩道防線的層級（實測釘死，勿混用）**：
 

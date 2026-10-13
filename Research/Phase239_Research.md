@@ -293,7 +293,7 @@
 ///   （單底線 `_` 不在此限：`_DebugMode` 等即為既有的合法鍵。）
 ```
 
-**落點（守衛）**：於既有之測試靶（`Tests/LibVanguardTests/`）新增一支檔案（建議 `UserDefNamingTests.swift`）：
+**落點（守衛）**：於既有之測試目標（`Tests/LibVanguardTests/`）新增一支檔案（建議 `UserDefNamingTests.swift`）：
 
 ```swift
 @Test
@@ -307,7 +307,7 @@ func testNoRawValueStartsWithDoubleUnderscore() {
 }
 ```
 
-（該靶為 6.4+ 側獨有——5.10 側不宣告測試靶，故此守衛不影響 legacy 建置。）
+（該目標為 6.4+ 側獨有——5.10 側不宣告測試目標，故此守衛不影響 legacy 建置。）
 
 **`vChewingSharedCLI` 之 `check-userdef-naming` 動詞構想不列入本計畫**：既有之單元測試已足夠，而多加一個 CLI 動詞屬額外維護面。
 
@@ -809,13 +809,13 @@ clean:
 
 ### 6.2 契約測試與後設資料稽核
 
-- **契約測試（最強手段；承 §5.3 之不跨倉約束）**：把 `tests/fixtures/*.json` 複製進 **`vChewing-macOS` 內**某個測試靶之資源，斷言 **`UserDef.importFromJSON(fixture)` 之 `failures.isEmpty`**。如此，**助手一旦產出 IME 不收的包、Swift 側測試即紅**。
-  該靶應選 **macOS 倉獨有**者（例如既有之 `Packages/vChewing_SettingsUI` 之測試靶——其為 macOS 專屬，且已相依 `LibVanguard` 故可直接呼 `UserDef.importFromJSON`），**而非** `vChewing_OSNeutral_LibVanguard` 之測試靶：後者與 `vChewing-LibVanguard` 維持逐位元組鏡像，為它增設測試資源會連帶改動兩倉 manifest，與 §5.4.3 第 2 條「無須改 manifest」之益處相衝。**無論選何者，此測試只在 `vChewing-macOS` 之內**（落點之裁定見 §七）。
+- **契約測試（最強手段；承 §5.3 之不跨倉約束）**：把 `tests/fixtures/*.json` 複製進 **`vChewing-macOS` 內**某個測試目標之資源，斷言 **`UserDef.importFromJSON(fixture)` 之 `failures.isEmpty`**。如此，**助手一旦產出 IME 不收的包、Swift 側測試即紅**。
+  該目標應選 **macOS 倉獨有**者（例如既有之 `Packages/vChewing_SettingsUI` 之測試目標——其為 macOS 專屬，且已相依 `LibVanguard` 故可直接呼 `UserDef.importFromJSON`），**而非** `vChewing_OSNeutral_LibVanguard` 之測試目標：後者與 `vChewing-LibVanguard` 維持逐位元組鏡像，為它增設測試資源會連帶改動兩倉 manifest，與 §5.4.3 第 2 條「無須改 manifest」之益處相衝。**無論選何者，此測試只在 `vChewing-macOS` 之內**（落點之裁定見 §七）。
 - **助手側之純函式單元測試**（`node --test`，零額外相依）：`preset.ts`（答案物件 → JSON 之逐案例：稀疏性、型別、值域、預設值填充、黑名單鍵永不出現）；`schema.ts`（後設資料之覆蓋率——**118 條鍵是否皆在 metadata 內**）；`deeplink.ts` 之測試見附錄 A。
 - **`make metadata`**：Swift 側後設資料與入庫版之 diff 檢查（漂移偵測）。
 - **`make metadata-audit`**：上述導出之 `--strict` 模式——任一語系缺任一 `UserDef` 標籤鍵即失敗。**此為本倉目前不存在之 i18n 稽核能力**：既有之 `generate-missing-strings` 只做 `.strings` 之間之互相對位，**不驗與 `UserDef` 之對位**。
 - **`dump-userdef-metadata` 自身之驗證**（實作該動詞時應一併附上）：① **冪等**——同一輸入連跑兩次，輸出逐位元組相同；② 不給任何 `locale=path` 時仍輸出合法 JSON、且 `entries.count == 118`；③ 給一份刻意缺鍵之臨時 `.strings` 時 `missingI18nKeys` 非空、且 `--strict` 回 `1`；④ `entries[].key` 之集合恆等於 `UserDef.allCases` 之集合；⑤ **不變式**：任一帶 `range` 之 entry，其 `default` 必落在 `range` 之內（此即「後設資料所稱之預設值，必為 `importFromJSON` 之 `validateAndApply` 所接受者」之最低保證）。
-  **載體**：上述 ①–⑤ **可以不必新增 Swift 測試靶**——於 WebConfigAssistant 之 `Makefile` 以 shell ＋ `python3` 對導出檔做檢查即可（跑兩次 `cmp`、`python3 -c` 斷言 `count`／鍵集／`range` 包含 `default`）。此可保住 §5.4.3 第 2 條「**新增動詞無須改任何 manifest**」之性質；若改採一等公民的 Swift 測試靶，則須為該 executable 靶新增一個測試靶，**那會同時改動兩倉之 `Package.swift` 與 5.10 manifest（後者須再添一條不收錄之說明）**，成本與本動詞本體同量級。**本文建議走 shell 路線**（理由：該動詞之產物本身即資料、資料之驗證用比對最直接；且 CLI 靶自來無測試靶、維持一致）。載體之裁定見 §七。
+  **載體**：上述 ①–⑤ **可以不必新增 Swift 測試目標**——於 WebConfigAssistant 之 `Makefile` 以 shell ＋ `python3` 對導出檔做檢查即可（跑兩次 `cmp`、`python3 -c` 斷言 `count`／鍵集／`range` 包含 `default`）。此可保住 §5.4.3 第 2 條「**新增動詞無須改任何 manifest**」之性質；若改採一等公民的 Swift 測試目標，則須為該 executable 目標新增一個測試目標，**那會同時改動兩倉之 `Package.swift` 與 5.10 manifest（後者須再添一條不收錄之說明）**，成本與本動詞本體同量級。**本文建議走 shell 路線**（理由：該動詞之產物本身即資料、資料之驗證用比對最直接；且 CLI 目標自來無測試目標、維持一致）。載體之裁定見 §七。
 
 ### 6.3 實機實測項
 
@@ -1135,7 +1135,7 @@ URL 僅作「設定包之識別（指紋）」，實際傳輸改由 ① 官網�
 
 ### B.4 後設資料導出之獨立腳本備選
 
-於 `vChewingSharedCLI` 新增 `dump-userdef-metadata` 動詞定案前之備選：另寫一支獨立 Swift 腳本導出後設資料。**作廢之理由**：需自行維護一支可執行靶，且與 CLI 動詞重複。（定案之規格見 §5.4。）
+於 `vChewingSharedCLI` 新增 `dump-userdef-metadata` 動詞定案前之備選：另寫一支獨立 Swift 腳本導出後設資料。**作廢之理由**：需自行維護一支可執行目標，且與 CLI 動詞重複。（定案之規格見 §5.4。）
 
 ### B.5 隨派送方式定案而失效之待裁定項（一句話記載）
 

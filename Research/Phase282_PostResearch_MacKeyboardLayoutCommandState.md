@@ -286,7 +286,7 @@ So the layout already provides the shortcut character; only the reading drops it
 **護欄**：`Packages/vChewing_MainAssembly4Darwin/Tests/MainAssembly4DarwinTests/KeyLayoutCommandStateTests.swift`
 （fixture 以 `#filePath` 錨定工作區根）釘住兩件事：① 每檔都存在一條「**必須同時**要求 `command` 與 `control`」的條目，
 且它**排在**「只要求 `control`」那條之前（**位置即判準**）；② 凡規格**要求** `command` 的條目，其目標 map 的
-`keyCode` 0／1／2／13 輸出必須是 `a`／`s`／`d`／`w`（不得是注音）。此靶當場抓到初稿測試自身的一處解析缺陷
+`keyCode` 0／1／2／13 輸出必須是 `a`／`s`／`d`／`w`（不得是注音）。此目標當場抓到初稿測試自身的一處解析缺陷
 （檔案有兩個 `keyMapSet`，稀疏的那個會覆寫完整的那個），已修正為只取第一個。
 
 **效果界線（務必明記）**：本修**不會**單獨救回 `⌃⌘` 系熱鍵。真機上 AppKit 對「含 Control」的和弦會再施一次控制字元轉換

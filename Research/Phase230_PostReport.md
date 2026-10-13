@@ -9,7 +9,7 @@
 - **基準版本**：`vChewing-LibVanguard` git `d48486d`（2026-09-18）；手術前後皆同機同語料量測。
 - **量測機／工具鏈**：Apple M4（Mac16,10），macOS 27.0（26A428），Swift 6.4.0-RELEASE，
   `swift test -c release`（`-O`、`-default-isolation MainActor`）。
-- **量測靶**：`LXCoreEXScaleBench.swift`（臨時；跑畢已移出測試靶，存於
+- **量測目標**：`LXCoreEXScaleBench.swift`（臨時；跑畢已移出測試目標，存於
   `vChewing-LibVanguard/tmp/LXCoreEXScaleBench.swift`）。本報告之所有原始輸出見附錄。
 
 ---
@@ -203,7 +203,7 @@ guard containsHalfWidthAlphanumerical || (newToneOne != " " && contains(" ")) el
 **驗證三件**：① **差分壓力測試**——模擬器比對新舊守衛，字母表
 `{ㄅ, ㄕ, ㄚ, ㄧ, -, 空格, _, a, b, z, 1, é, 日, 😀}` 之長度 1–4 全組合（抽樣 60,000）× `newToneOne ∈ {"", " ", "-"}`
 ＝ **124,110 例、0 筆不一致**；② **紅綠雙驗**——錯版守衛（丟掉空格子句）使該測**恰紅 1 筆**
-（`spacedBopomofo`），恢復後全綠；③ 全靶測試見下節。
+（`spacedBopomofo`），恢復後全綠；③ 全目標測試見下節。
 
 ---
 
@@ -244,9 +244,9 @@ guard containsHalfWidthAlphanumerical || (newToneOne != " " && contains(" ")) el
 
 ### 6.3 驗證（2026-09-18，本機實測）
 
-- **全靶（Release）**：`vChewing-LibVanguard` 之 `swift test -c release --no-parallel --disable-sandbox`
-  ⇒ **9 靶 550 支全過**（18／37／7／6／212／**199**／61／3／7；`LexiconAssemblyTests` 由 198→199＝新測項）、
-  零 `failed`、零 `error:`；`vChewing-macOS` 之巢狀套件同一命令 ⇒ **9 靶 550 支全過**（同九個數字）。
+- **全目標（Release）**：`vChewing-LibVanguard` 之 `swift test -c release --no-parallel --disable-sandbox`
+  ⇒ **9 個目標 550 支全過**（18／37／7／6／212／**199**／61／3／7；`LexiconAssemblyTests` 由 198→199＝新測項）、
+  零 `failed`、零 `error:`；`vChewing-macOS` 之巢狀套件同一命令 ⇒ **9 個目標 550 支全過**（同九個數字）。
 - **格式管線**：兩倉 `make lintFormatUncommitted` 皆 `rc=0`；兩倉受改兩檔 md5 逐一同值
   （`PinyinPhonaConverter.swift` `82e9e42766596db350925b48ac5dfe07`、
   `LXCoreEXTests.swift` `824b1de70866f525c16755a8dbc3c57d`）、連跑兩次 md5 逐次不變；
@@ -417,7 +417,7 @@ unigramsFor n=5000 mean=1.412µs p50=1.334 p95=2.042 p99=2.541 max=26.000
 ## 附錄 C：重現方式
 
 ```sh
-# 1) 把量測靶放回測試靶
+# 1) 把量測目標放回測試目標
 cp vChewing-LibVanguard/tmp/LXCoreEXScaleBench.swift \
    vChewing-LibVanguard/Tests/LexiconAssemblyTests/
 
@@ -433,4 +433,4 @@ swift test -c release --disable-sandbox --filter 'benchThreeHundredK'         # 
 rm vChewing-LibVanguard/Tests/LexiconAssemblyTests/LXCoreEXScaleBench.swift
 ```
 
-量測靶輸出之完整報告存於 `/tmp/lxcoreex_scale_report.txt`（每次執行覆寫）。
+量測目標輸出之完整報告存於 `/tmp/lxcoreex_scale_report.txt`（每次執行覆寫）。

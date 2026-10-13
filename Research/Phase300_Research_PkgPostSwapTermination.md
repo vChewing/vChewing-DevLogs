@@ -46,11 +46,11 @@
   1. 合作型（SIGTERM 即退）⇒ `captured=[32473] escalated=false result=vacated surviving=[]`。
   2. `signal(SIGTERM, SIG_IGN)` 者 ⇒ `escalated=true result=vacated`（SIGKILL 後退場）。
   3. 無目標 ⇒ `captured=[] escalated=false result=vacated surviving=[]`。
-  4. owner 閘拒絕：`login_user` 指為他人 ⇒ `captured=[]` 且靶不動；正向對照（真 console user）⇒ 捕捉並退場。
+  4. owner 閘拒絕：`login_user` 指為他人 ⇒ `captured=[]` 且目標不動；正向對照（真 console user）⇒ 捕捉並退場。
   5. 名長 19 字元（`vcProbeLongNameHere`）⇒ 捕捉成功。
   6. 僅 `-f` 可辨者（`exec -a "Contents/MacOS/vcProbePathRoute"`）⇒ 捕捉成功。
   7. 同名 zombie（`holder.c` fork 後 exec 一枚即退之 stub、父端 `pause()` 不 wait）⇒ 屍體不出現在 `ps -ax` 亦不出現在 `pgrep` ⇒ `captured=[] result=vacated`，保證刀不會把屍體誤報為 `stuck`。
-- 第一刀（preinstall）以 `sed -n '/^terminate_by_name() {/,/^}/p' pkgPreInstall.sh` 抽出後施測：有靶 ⇒ `Terminate: reason=preSwap target=vcProbeCoop killall=0 output=`（靶退場）；無靶 ⇒ `killall=1 output=No matching processes belonging to you were found`。
+- 第一刀（preinstall）以 `sed -n '/^terminate_by_name() {/,/^}/p' pkgPreInstall.sh` 抽出後施測：有目標 ⇒ `Terminate: reason=preSwap target=vcProbeCoop killall=0 output=`（目標退場）；無目標 ⇒ `killall=1 output=No matching processes belonging to you were found`。
 - 踩坑一：**P298 所記「`pgrep -x` 只認 `MAXCOMLEN`（16 位元組）以內之程序名」在本機 macOS 27 不成立**——19 字元名之 stub 以 `pgrep -x <全名>` 命中；反之，`exec -a` 改過之 comm 在 `ps -o comm=` 顯示為截斷之 `Contents/MacOS/v`（15 字元），該情形由 `-f` 路徑補位。
 - 踩坑二：**平台二進位之複本不得自可寫卷重執行**——於 `/tmp` 執行 `/bin/sleep`、`/bin/sh`、`/usr/bin/jq` 之複本一律 `Killed: 9`（AMFI／封印卷）⇒ 探針須自編 stub，不可倚賴改名之系統二進位。
 - 踩坑三：直譯腳本之 `comm` 為**直譯器**（`ps -o comm=` 得 `/bin/sh`）⇒ 改名之 shell 腳本只能驗 `-f` 路徑。

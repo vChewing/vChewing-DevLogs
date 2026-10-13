@@ -121,7 +121,7 @@
    實測：該遷移候選之產物**跑完 78／78 測試、5／5 fixture 逐位元組相同**，代價是出貨產物
    **＋39,303 bytes（+11.3%）**，以及 `src/schema.ts` 那一層之**靜態型別檢查**（§2.8、§5.2）。
 4. **Swift 側之要求全部可滿足**：`swift-tools-version: 5.10` 之基底 manifest ＋
-   `Package@swift-6.4.swift` 追加測試靶——實測 5.10 toolchain 下 `swift test` 印
+   `Package@swift-6.4.swift` 追加測試目標——實測 5.10 toolchain 下 `swift test` 印
    **`error: no tests found`**、6.4 toolchain 下 swift-testing 正常執行；actor 與 task group 在 5.10 下
    編譯並**正確執行**（§2.3）。
 5. **`.NET 10`（實測後改判；初稿之否定已被推翻）**：初稿誤判「本機未安裝 `dotnet`」——
@@ -319,19 +319,19 @@ core.js 載入 JSC 完畢：2.8 ms
 1,096 行之 DOM 冒煙測試（含 DOM 替身 216 行）不需改寫一個字——這是本研究**成本最低、
 回報最高**的一項發現。
 
-### 2.3 實驗三：雙 manifest（5.10 基底 ＋ 6.4 測試靶）之實測行為
+### 2.3 實驗三：雙 manifest（5.10 基底 ＋ 6.4 測試目標）之實測行為
 
 委託要求「Swift 5.10+（單元測試限 6.4+）」。本倉既有佈局是「基底 6.4 ＋ 5.10 封堵鏈」，
-而委託要的是**反向**：基底須 5.10、測試靶只准 6.4+。實測以三檔小套件驗證：
+而委託要的是**反向**：基底須 5.10、測試目標只准 6.4+。實測以三檔小套件驗證：
 
-- `Package.swift`（`swift-tools-version: 5.10`，只宣告執行檔靶）
+- `Package.swift`（`swift-tools-version: 5.10`，只宣告執行檔目標）
 - `Package@swift-6.4.swift`（`swift-tools-version: 6.4`，追加 `.testTarget`）
 
 | 呼叫 | 結果（實測） |
 |---|---|
 | 6.4 toolchain `swift test` | swift-testing 執行 1 支測試並通過 |
 | 6.4 toolchain `swift build` | 成功 |
-| **5.10 toolchain** `swift package dump-package` | `toolsVersion: 5.10.0`、`targets: ['vca-builder']` ⇒ **選中的是基底 `Package.swift`，測試靶不存在** |
+| **5.10 toolchain** `swift package dump-package` | `toolsVersion: 5.10.0`、`targets: ['vca-builder']` ⇒ **選中的是基底 `Package.swift`，測試目標不存在** |
 | **5.10 toolchain** `swift build` | 成功 |
 | **5.10 toolchain** `swift run` | `actor total = 36` ⇒ **actor ＋ `withTaskGroup` 在 5.10 下確實可執行** |
 | **5.10 toolchain** `swift test` | `error: no tests found; create a target in the 'Tests' directory` ⇒ **測試結構性地被擋在 6.4 之外** |
@@ -340,11 +340,11 @@ core.js 載入 JSC 完畢：2.8 ms
 > `xcrun swift --version` 仍回報 6.4；必須用 toolchain 之 **bundle identifier**
 > （`TOOLCHAINS=org.swift.5101202406041a`，由
 > `/Library/Developer/Toolchains/swift-5.10.1-RELEASE.xctoolchain/Info.plist` 之
-> `CFBundleIdentifier` 取得）。本文第一輪實測曾因此得到**假陽性**（誤以為 5.10 也跑得動測試靶），
+> `CFBundleIdentifier` 取得）。本文第一輪實測曾因此得到**假陽性**（誤以為 5.10 也跑得動測試目標），
 > 覆核後推翻。此坑與 `Phase217_SOP.md` 之 toolchain 擇定同源，建議一併記入該檔。
 
 **證明了什麼**：委託之兩項要求**不需任何約定或 CI 紀律即可結構性成立**——
-5.10 用基底 manifest（無測試靶）、6.4 用 `Package@swift-6.4.swift`（有測試靶）；
+5.10 用基底 manifest（無測試目標）、6.4 用 `Package@swift-6.4.swift`（有測試目標）；
 而 `actor` 不因降到 5.10 而失效。**5.10 之要求本身也有正當理由**：見 §4.7。
 
 ### 2.4 實驗四：`"use strict"` 之所在位置是**行為載重**的
@@ -423,7 +423,7 @@ ICU : 唯音let x ⇒ false   .let x ⇒ false   let x ⇒ true
 **既有結論**（`KnowledgeMemo4LLM.md` §A2.2 第 16 條③，已實測）：Release 產物**不含**其內容，
 故不影響出貨。**本文追加**：`.ts`／`.mjs`／`.json` 對 Xcode 是「無編譯器之型別／資源」，
 故今日只是被列舉與索引；但 **`.swift` 是一級原始碼型別**——在 `ValueAdd/` 內新增 `.swift` 檔
-**會被納入 `vChewing` 靶之成員集並參與編譯**（**推論**：依同步根群組之成員規則與
+**會被納入 `vChewing` 目標之成員集並參與編譯**（**推論**：依同步根群組之成員規則與
 `RawImages/*.pxd` 之所以需要例外集之事實反推；**未以一次 Xcode 建置實測**，見 §6.1 之 R2）。
 **故本研究建議之套件落點必須先處理此事**（§4.6）。
 
@@ -573,7 +573,7 @@ Swift 無法編譯 TypeScript。要在 Swift 內做到，等於在 Swift 內重�
 ```
 vChewing-macOS/ValueAdd/WebConfigAssistant/
 ├── Builder/                             ← 新增：SwiftPM 套件（零相依）
-│   ├── Package.swift                    ← swift-tools-version: 5.10（只有執行檔靶）
+│   ├── Package.swift                    ← swift-tools-version: 5.10（只有執行檔目標）
 │   ├── Package@swift-6.4.swift          ← 追加 BuilderTests（swift-testing）
 │   ├── Sources/VCABuilder/
 │   │   ├── main.swift                   ← 動詞分派（§4.2）
@@ -694,7 +694,7 @@ vca-builder collect --into Build/Products/Release/vChewing.app/Contents/Resource
 
 ### 4.6 與 Xcode／SwiftPM 之隔離
 
-依 §2.7，在 `ValueAdd/` 內新增 `.swift` 檔會落入 `vChewing` 靶之成員集。三個選項：
+依 §2.7，在 `ValueAdd/` 內新增 `.swift` 檔會落入 `vChewing` 目標之成員集。三個選項：
 
 | 選項 | 作法 | 評價 |
 |---|---|---|
@@ -741,7 +741,7 @@ $(VCA_TOOL): $(wildcard $(VCA_DIR)/Builder/Sources/VCABuilder/*.swift)
 2. `assets/userdef-metadata.json`、`assets/settings-surface.json`、`tests/fixtures/*.json` 逐位元組**未變**。
 3. `make audit` rc=0；78 支測試全綠；輸出行數與內容與遷移前等價。
 4. `git grep -n "node\b"` 於 `ValueAdd/WebConfigAssistant/` 下**零命中**（除文件敘述）。
-5. Xcode 之一次建置（§4.6 甲）仍成功，且 `vChewing` 靶之成員集**不含** `Builder/`。
+5. Xcode 之一次建置（§4.6 甲）仍成功，且 `vChewing` 目標之成員集**不含** `Builder/`。
 
 **一項必須言明之限定（第九輪補）**：階段一移除了「**node 作為建置器**」，但**若仍沿用 npm 版之
 `tsc`，則 node 仍以 `tsc` 之啟動器身分留在建置期**（§1.2 之實測）。故「node 完全退場」實為**兩步**：
@@ -805,7 +805,7 @@ $(VCA_TOOL): $(wildcard $(VCA_DIR)/Builder/Sources/VCABuilder/*.swift)
 | # | 風險 | 級別 | 依據 | 緩解／驗證 |
 |---|---|---|---|---|
 | R1 | **TypeScript 前端不可由 Swift 取代** | —（事實） | §3.2 | 甲／乙／丙三路；建議甲為必經、乙另議 |
-| R2 | `ValueAdd/` 同步根群組會把新 `.swift` 納入 `vChewing` 靶 | 中 | **推論**（§2.7） | 例外集（§4.6 甲）＋**一次 Xcode 建置實測**；未驗前不動 `pbxproj` 之外的最終決定 |
+| R2 | `ValueAdd/` 同步根群組會把新 `.swift` 納入 `vChewing` 目標 | 中 | **推論**（§2.7） | 例外集（§4.6 甲）＋**一次 Xcode 建置實測**；未驗前不動 `pbxproj` 之外的最終決定 |
 | R3 | 兩次 `swift run` 併發時 SwiftPM 之建置鎖 | 中 | **推論**（§4.3①） | actor 獨占 ＋ 合併為一次 dump；**未實測併發行為** |
 | R4 | `"use strict"` 之位置為行為載重 | **高（若誤改）** | **實測**（§2.4） | 串接器保留現行順序；**新增一條測試**固化「產物不得為嚴格模式」 |
 | R5 | ES5 規則若以 ICU 正則重寫，`\w`／`\s` 語意漂移 | **高（若誤改）** | **實測**（§2.5） | 規則與掃描器留 JS、於 JSC 內執行；若必移植則附差分測試（§3.3①） |
@@ -1016,7 +1016,7 @@ SwiftPM 之取件走 **git over HTTPS**，與 NuGet 之 CDN 取件不是同一�
 且使問題精確地落在**單一元件**上——這正是本節之所以關鍵。
 
 **唯一之工具鏈限制（非平台限制）**：5.10 側 manifest **刻意不收** `vChewingSharedCLI`
-（其註解自述該靶「是早年用來輔助提取 `UserDef` localization key 的一次性枴杖，非出貨路徑」，
+（其註解自述該目標「是早年用來輔助提取 `UserDef` localization key 的一次性枴杖，非出貨路徑」，
 且它是 5.10 側唯一之執行檔、會被壓上 10.13 之 minOS）。故該 CLI **只在 6.4 側存在**；
 而 CI 在 Windows／Linux 上所用者正是 6.4。
 

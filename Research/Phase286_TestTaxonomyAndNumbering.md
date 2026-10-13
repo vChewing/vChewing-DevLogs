@@ -30,7 +30,7 @@
 
 **分類即檔案**：一分類一檔（`InputHandlerTests_<Category>.swift`／`SessionTests_<Category>.swift`），檔頭以 `// MARK: - <Suite>.<Category>` 起頭並附該分類之義界；檔內之子標記沿用原檔之 `// MARK:`（僅保留該分類之主要來源檔者）。
 
-**suite 階層與序列化不變**：根 suite `LibVanguardTestsRoot`（`.serialized`）→ `InputHandlerTests` → `SessionTests` 之三層結構、以及 `.serialized` 之繼承關係一字未動——此為本靶共用行程內全域狀態之必要條件（見 `LibVanguardTests_Root.swift`）。
+**suite 階層與序列化不變**：根 suite `LibVanguardTestsRoot`（`.serialized`）→ `InputHandlerTests` → `SessionTests` 之三層結構、以及 `.serialized` 之繼承關係一字未動——此為本目標共用行程內全域狀態之必要條件（見 `LibVanguardTests_Root.swift`）。
 
 ## 三、分類註冊表
 
@@ -354,7 +354,7 @@
 
 - **保留原數字、只補空號與去重**：不能解「數字不反映分類」與「跨套重號」兩項根因，僅是把病灶修得整齊些。
 - **分類只寫進標題、函式名沿用 `test_IH###`**：`--filter` 與測試報告之主要手柄是函式名；分類不入函式名即等於沒有分類。
-- **以 Swift Testing 之 `@Tag` 取代分類**：標籤不出現在函式名、亦不影響檔案佈局；且本靶之 suite 階層受 `.serialized` 之結構約束（測試方法住同一個 `InputHandlerTests` 類別，無法再按分類拆成子 suite 而不搬動 harness 狀態）。
+- **以 Swift Testing 之 `@Tag` 取代分類**：標籤不出現在函式名、亦不影響檔案佈局；且本目標之 suite 階層受 `.serialized` 之結構約束（測試方法住同一個 `InputHandlerTests` 類別，無法再按分類拆成子 suite 而不搬動 harness 狀態）。
 - **為壓低單檔行數而把大分類再切細**：分類粒度以語義為準、不以行數為準；動工前之 `Cases1` 已有 4,951 行之前例，行數不是本 phase 要治的病。
 - **改寫歷史文書中之舊測試名**：違反本倉「歷史記錄保留舊稱」之既例（沿 P261 狂拼更名之例）；僅更新**現況性**引用（`KnowledgeMemo4LLM.md` 之兩處）。
 

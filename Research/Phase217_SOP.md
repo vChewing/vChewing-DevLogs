@@ -35,7 +35,7 @@
 | 其餘 18 個 `Packages/*` | 皆 6.2 單一 manifest | 補四份 manifest ＋ 語法遷移（各個擊破） |
 | `vChewing_InstallerAssembly4Darwin`、`vChewing_MainAssembly4Darwin` | 皆 6.2 單一 manifest | **5.10 側的終點**（規則 2）；收斂序見 §九 |
 | 根 `Package.swift`（`vChewing`／`vChewingInstaller` 兩支執行檔 ＋ `BundleApps` 插件） | 6.2 單一 manifest | **不在 5.10 側**（規則 2：OpenSource toolchain 之產出止於 `.a`，可執行檔由 Xcode 連結端產出） |
-| `Sources/vChewingIME_macOS/Modules/main.swift`、`Sources/Installer_macOS/main.swift` | 收錄於根 manifest 之兩靶 | 同上（不進 5.10 側） |
+| `Sources/vChewingIME_macOS/Modules/main.swift`、`Sources/Installer_macOS/main.swift` | 收錄於根 manifest 之兩目標 | 同上（不進 5.10 側） |
 | `Sources/vChewingDebuggable/`（2 檔，**僅** Xcode target，不在根 manifest） | — | **不納入 5.10 側**（事主裁定 Q01：目前不需要） |
 | `vChewing.xcodeproj/project.pbxproj` | 三 scheme，`MACOSX_DEPLOYMENT_TARGET` 多為 12.0 | **先不動**（事主裁定 Q07） |
 | `.github/workflows/` 三條 | 僅 6.2+ | **不做**（規則 8 定案：5.10 建置暫不列入 CI） |
@@ -44,7 +44,7 @@
 
 **完成定義（逐步可驗收）**：對每個 in-scope package，能滿足「四份 manifest 就位」「`make build510-<pkg>` rc=0、0 error」「產物為 `.a`」「6.2 側不退化」四項，即該 package 收工。**全 phase 的完成＝`vChewing_InstallerAssembly4Darwin` 與 `vChewing_MainAssembly4Darwin` 兩支的 `.a` 皆可產出並供 Xcode 鏈接**（規則 2）＋ §十 驗收矩陣全綠。
 
-**已定案（事主 2026-09-15 裁定 Q01）：`vChewingDebuggable` 不做 5.10 相容——目前不需要。** 事主原文：「這個 target 是用來測試 **memory footprint** 的。所有**不內建 Swift Runtime** 的 macOS 系統下的記憶體佔用**可能都會多出 200MB**、以供 Swift Runtime（包括各種 Swift AppKit Shim dylib）使用。**此乃已知狀況，不需要 `vChewingDebuggable` 再專門據此測試。**」故該靶**維持僅存在於 Xcode、不進 5.10 側**；其產物形態問題（原④）**因本裁定而連帶作廢**（非出貨靶既不在 5.10 側，即不存在 minOS／triple 的問題）。
+**已定案（事主 2026-09-15 裁定 Q01）：`vChewingDebuggable` 不做 5.10 相容——目前不需要。** 事主原文：「這個 target 是用來測試 **memory footprint** 的。所有**不內建 Swift Runtime** 的 macOS 系統下的記憶體佔用**可能都會多出 200MB**、以供 Swift Runtime（包括各種 Swift AppKit Shim dylib）使用。**此乃已知狀況，不需要 `vChewingDebuggable` 再專門據此測試。**」故該目標**維持僅存在於 Xcode、不進 5.10 側**；其產物形態問題（原④）**因本裁定而連帶作廢**（非出貨目標既不在 5.10 側，即不存在 minOS／triple 的問題）。
 
 **已定案（事主 2026-09-15 新規 2）：5.10 側的用途是 compilability，不是 runtime。** 產物止於供 Xcode 鏈接的 static `.a`；libArcLite 與 macOS 10.9 compatible Swift Runtime 的摻入由 Xcode ＋ macOS 13.3- SDK 負責，不在本 phase 的工具鏈職責內。**本條取代本 SOP 初稿之「5.10 側的用途：能建置抑或能跑在舊系統上」一問——該項已定案移出。**
 
@@ -52,9 +52,9 @@
 
 | # | 不變式 | 依據 | 施工中的具體紅線 |
 |---|---|---|---|
-| **I1** | 每個行程內 `SwiftExtension` 恰一份 image | P215 §四（本 phase 唯一硬性不變式） | 不得新增任何「同套件 dynamic product」依賴；不得把 `SwiftExtension` 的型別副本抄進任何靶；`Deps/VanguardSwiftExtension` 的產品型別（Darwin `.dynamic`、非 Darwin `.static`）一字不動 |
+| **I1** | 每個行程內 `SwiftExtension` 恰一份 image | P215 §四（本 phase 唯一硬性不變式） | 不得新增任何「同套件 dynamic product」依賴；不得把 `SwiftExtension` 的型別副本抄進任何目標；`Deps/VanguardSwiftExtension` 的產品型別（Darwin `.dynamic`、非 Darwin `.static`）一字不動 |
 | **I2** | 兩倉 byte-sync | P214 定讞；P216 §13.4 復原並維持 | `vChewing-LibVanguard/` ↔ `vChewing-macOS/Packages/vChewing_OSNeutral_LibVanguard/` 的 `Sources/`、`Deps/`、`Package.swift`、`Package@swift-5.10.swift`（及 6.0／6.1 兩份封堵檔）必須**逐位元組相同**；任一側的改動須**同輪鏡像**並以 `cmp`／`diff -rq` 驗收 |
-| **I3** | 6.2 側全綠且項數不減 | P216 §一 | 每個 P217 commit 都必須維持 `swift build` ✅、`swift test` 全綠；**項數不得少於動工前基線**。項數若因靶拆分而位移，回報中須明列「N → M ＋ K」的守恆帳 |
+| **I3** | 6.2 側全綠且項數不減 | P216 §一 | 每個 P217 commit 都必須維持 `swift build` ✅、`swift test` 全綠；**項數不得少於動工前基線**。項數若因目標拆分而位移，回報中須明列「N → M ＋ K」的守恆帳 |
 
 **I1 為何是硬不變式的量化理由**（P215 §2.4／§2.5，施工時若有人提議「抄一份進去比較快」請回看本條）：`OSFrameworkImpl` 的 **public 簽名**上有 `@ArrayBuilder`、且對 `SwiftExtension` 的 `AppProperty` 宣告了 retroactive `DynamicProperty` conformance，而聚合體內的 `PrefMgr` 帶約 103 項 `@AppProperty`。同名兩份 image 即 ABI 危險型態；且 SwiftPM 對此**不報錯**，是靜默產出（探針 D／E 實測）。
 
@@ -66,7 +66,7 @@
   - **判定單位是模組、不是整包；仍須 case-by-case 逐一確認**（Q02 之裁定語即「case-by-case 逐一確認」）。每件的確認步驟：① 在 legacy 倉找出對位模組並比對其公開介面；② 確認其寫法在 5.10 側即可編（legacy 全倉無宣告層級 `@MainActor`，這正是 §6.1「那一刀」的來源）；③ 確認 6.2 側繼承後 `swift build`／`swift test` 不退化（I3）；④ **若該模組位於共享 `Sources/` 內，繼承即觸發 I2 的兩倉 byte-sync 鏡像**，不可只做單側。
   - 手法的位置見 §5.1(g)。**清單不預先列出**——依 Q02 之裁定，逐件於施工時確認並就地記錄。
 
-- `vChewing-VanguardLexicon`（遠端）：**不處理（事主裁定 Q09）**。事主原文：「**已經與 Swift 5.10 相容。**現階段不用處理。**Swift 版本低於 5.10 的時候會自動報錯。**」　**（2026-09-16 補充：本裁定意謂「本 phase 不動該倉」；惟其後實測顯示該套件在 5.10 SwiftPM 之**依賴層**仍不可消費——其兩支 plugin 產品的 `CSQLite3` 靶帶 `.unsafeFlags(["-w"])`。故「改該倉」之事已另立為 §十四 **N4**，不與本裁定衝突：Q09 說的是本 phase 不處理，N4 記的是「下一 phase 若要讓 MainAssembly 於 5.10 側可建置，則必須由該倉出新版」。）**
+- `vChewing-VanguardLexicon`（遠端）：**不處理（事主裁定 Q09）**。事主原文：「**已經與 Swift 5.10 相容。**現階段不用處理。**Swift 版本低於 5.10 的時候會自動報錯。**」　**（2026-09-16 補充：本裁定意謂「本 phase 不動該倉」；惟其後實測顯示該套件在 5.10 SwiftPM 之**依賴層**仍不可消費——其兩支 plugin 產品的 `CSQLite3` 目標帶 `.unsafeFlags(["-w"])`。故「改該倉」之事已另立為 §十四 **N4**，不與本裁定衝突：Q09 說的是本 phase 不處理，N4 記的是「下一 phase 若要讓 MainAssembly 於 5.10 側可建置，則必須由該倉出新版」。）**
   - **一併定案（Q07）：`vChewing.xcodeproj/project.pbxproj` 先不動。** 事主原文：「Legacy 倉庫的建置會引入『**舊版 Xcode 專用的 pbxproj**』。如果都讓一個 pbxproj 負責的話，**新版 Xcode 可能會自動摧毀掉舊版系統的 compilability**。」→ 故**不**在新舊 Xcode 之間共用同一份 pbxproj。
 - `vChewing-Homebrew`／`vChewing-HomePage.io`／`vChewing-DevLogs`（除本規範之記錄本身）：不動。
 - **P216 §十一的四項殘留之現行處置**：`Tekkon.sharedCache` → **不用處理（Q05，見 §6.4）**；兩個 5.10 warning（`InputSession.clientProxyObjectIdentifier`、`PrefMgr.didAskForSyncingLMPrefs`）→ 未動、僅列報；`Sources/LexiconAssembly/vChewingLXAssembly_Common.swift:72` 唯一那處 `#if compiler(>=6.2)` → 事主裁定保留；`withFileHandleQueue*` → **不用退役（Q06，見 §6.2）**；legacy 的 10.9 疑點 → 列為**事實層未解**（見文末〈事主裁定〉該段）。**其餘仍未動者，除事主另裁外不併辦。**
@@ -294,7 +294,7 @@ clean510:
 
 **逐套件施工 checklist（2026-09-15 實查，可直接當工單用）**：共 **19 個 subpackage**。`目錄名` 即 SwiftPM 本地路徑相依的 **package identity**（消費端以 `.product(name:package:)` 指涉時用的就是它，**不可逕自改名**）。
 
-| # | 目錄名（＝ package identity） | 性質 | 巢狀 `Deps/` | 現行 `Package.swift` 的 testTarget | 5.10 manifest 待砍 | C／ObjC 靶（須原樣保留） | Darwin-only |
+| # | 目錄名（＝ package identity） | 性質 | 巢狀 `Deps/` | 現行 `Package.swift` 的 testTarget | 5.10 manifest 待砍 | C／ObjC 目標（須原樣保留） | Darwin-only |
 |---|---|---|---|---|---|---|---|
 | 1 | `HangarRash_SwiftyCapsLockToggler` | 一般 | 無 | **0** | 無 | **有**（`CapsLockToggler`，C；`path: "Framework"`） | 否 |
 | 2 | `Jad_BookmarkManager` | 一般 | 無 | 1 | 1 個 testTarget | 無 | **是**（AppKit） |
@@ -307,7 +307,7 @@ clean510:
 | 9 | `vChewing_ModifierKeyHitChecker` | 一般 | 無 | **0** | 無 | 無 | 否 |
 | 10 | `vChewing_NotifierUI` | 一般 | 無 | 1 | 1 個 testTarget | 無 | **是** |
 | 11 | `vChewing_OSFrameworkImpl` | 一般 | 無 | 1 | 1 個 testTarget | **有**（`OSFrameworkImplViaObjC`） | **是** |
-| 12 | **`vChewing_OSNeutral_LibVanguard`** | **聚合體** | **有**（`Deps/VanguardSwiftExtension`） | **9** | 9 個 testTarget ＋ 2 個測試素材靶（`LXAssemblyMaterials4Tests`／`HomaSharedTestComponents`）＋ 1 個 CLI 執行檔（`vChewingSharedCLI`）＋ 產品清單縮為單一 static | 無 | 否（跨平台：有 `Glibc`／`Musl`／`WinSDK` 分支） |
+| 12 | **`vChewing_OSNeutral_LibVanguard`** | **聚合體** | **有**（`Deps/VanguardSwiftExtension`） | **9** | 9 個 testTarget ＋ 2 個測試素材目標（`LXAssemblyMaterials4Tests`／`HomaSharedTestComponents`）＋ 1 個 CLI 執行檔（`vChewingSharedCLI`）＋ 產品清單縮為單一 static | 無 | 否（跨平台：有 `Glibc`／`Musl`／`WinSDK` 分支） |
 | 13 | `vChewing_OtherIMEDataReader` | 一般 | 無 | 1 | 1 個 testTarget | 無 | 否（CommonCrypto／SQLite，無 UI） |
 | 14 | `vChewing_PopupCompositionBuffer` | 一般 | 無 | **0** | 無 | 無 | **是**（AppKit） |
 | 15 | `vChewing_SettingsUI` | 一般 | 無 | 1 | 1 個 testTarget | 無 | **是** |
@@ -320,7 +320,7 @@ clean510:
 
 - **19 個之中，11 個有 testTarget**（第 12 項的聚合體有 9 個，其餘 10 個各 1 個）；**8 個無**。凡有 testTarget 者，其 5.10 manifest 都要把 testTarget（及其 `Tests/` 依賴）**整段略去**——見 §四與 §5.3 鐵律六。
 - **巢狀 `Deps/` 只有 1 個**（聚合體，內含 `VanguardSwiftExtension`）。**但它是獨立套件，故它自己也有一組四份 manifest**（P216 已完成），且需要自己的一條 scratch（§2.4）。
-- **C／ObjC 靶有 3 個**（第 1、6、11 項）。這些是**生產靶、不是測試靶**，5.10 manifest 必須原樣保留（含其 `cSettings`／`path`／`publicHeadersPath`）。
+- **C／ObjC 目標有 3 個**（第 1、6、11 項）。這些是**生產目標、不是測試目標**，5.10 manifest 必須原樣保留（含其 `cSettings`／`path`／`publicHeadersPath`）。
 - **Darwin-only ＝ 13 個**（判準：`Sources/` 依賴 Apple 專屬 SDK——AppKit／SwiftUI／IMK／Carbon／IOKit／CoreText／Metal／AVFoundation／QuartzCore／CoreGraphics／UserNotifications 等）。此列**僅供對照**：5.10 側一律在 macOS 上建置，故不影響施工順序；它影響的是「本套件能否在 Linux／WinNT 上建置」（與本 phase 的 CI 無關，見 §八 第 9 條）。
 - **第五列的「待砍」僅指 5.10 manifest**；6.2 側的 `Package.swift` 一字不動（I3）。
 - **另有根 manifest**（倉根的 `Package.swift`，兩支執行檔＋`BundleApps` 插件）——依規則 2 **不在 5.10 側**，故**不需要**三份版本檔（見 §1.1 與 §9.1 末段）。
@@ -373,12 +373,12 @@ import PackageDescription
 |---|---|---|
 | 產品型別 | Darwin：`.dynamic`（`Vanguard` → `libVanguard.dylib`；`VanguardSwiftExtension` → `libVanguardSwiftExtension.dylib`）；非 Darwin（Linux／WinNT）：`.static` | **一律 `.static`**（連 `Deps/VanguardSwiftExtension` 亦已同步改 static） |
 | `platforms` | `.macOS(.v12)` | **`nil`** |
-| 測試靶 | 全數保留（11 個 subpackage 有，見 §3.1） | **全數不宣告**（**鐵律六**：Unit Tests 不對 5.10 開放，§4.3） |
-| 測試供料靶 | `LXAssemblyMaterials4Tests`、`HomaSharedTestComponents` 皆出貨 | **不宣告**（test-only 素材靶亦在鐵律六之列） |
-| 執行檔靶 | 保留 | **不宣告**（規則 2 之必然結果：本側產出止於 `.a`，可執行檔由 Xcode 連結端產出） |
-| C／ObjC 靶 | 保留 | **保留**（3 個：`CapsLockToggler`／`IMKSwiftModernHeaders`／`OSFrameworkImplViaObjC`——生產靶，非測試靶，須連 `cSettings`／`path` 一併搬） |
+| 測試目標 | 全數保留（11 個 subpackage 有，見 §3.1） | **全數不宣告**（**鐵律六**：Unit Tests 不對 5.10 開放，§4.3） |
+| 測試供料目標 | `LXAssemblyMaterials4Tests`、`HomaSharedTestComponents` 皆出貨 | **不宣告**（test-only 素材目標亦在鐵律六之列） |
+| 執行檔目標 | 保留 | **不宣告**（規則 2 之必然結果：本側產出止於 `.a`，可執行檔由 Xcode 連結端產出） |
+| C／ObjC 目標 | 保留 | **保留**（3 個：`CapsLockToggler`／`IMKSwiftModernHeaders`／`OSFrameworkImplViaObjC`——生產目標，非測試目標，須連 `cSettings`／`path` 一併搬） |
 | 語言模式 | `swiftLanguageModes: [.v6]`（實查全倉僅聚合體一份有） | `swiftLanguageVersions: [.v5]` |
-| `defaultIsolation` | 逐靶掛（§六） | 無（5.10 無此 `SwiftSetting`） |
+| `defaultIsolation` | 逐目標掛（§六） | 無（5.10 無此 `SwiftSetting`） |
 | DSL | 聚合體那套 `@resultBuilder` | 不需要（無條件編譯需求時，直接用陣列字面量） |
 
 ### 4.2 四條形態規則的理由
@@ -387,25 +387,25 @@ import PackageDescription
 2. **`platforms: nil`**：PackageDescription 能宣告的 macOS 最低值只有 **10.10**，一旦宣告即被**明文寫入產物的 `LC_BUILD_VERSION`**；本側索性不宣告，讓 SDK 之預設值說話。
 3. **靜態 `.a` 不帶 load command**：`vtool -show-build libX.a` 直接以 `not mach-o` 拒收。故 minOS **不進產物**、只影響 availability 檢查——而這正是我們要的（讓 5.10 側的可用性判定與 legacy 宿主一致）。
    - **例外是執行檔**：唯有可執行檔會被壓上 `LC_BUILD_VERSION`／`LC_VERSION_MIN_MACOSX` 的 minOS（本側因工具鏈地板而必為 10.13 級）。LibVanguard 側即以「不收 `vChewingSharedCLI`」避開此問題。**P217 沿此辦理，且此事已由規則 2 升格為定局**（見下一條）；唯一可能的非出貨執行檔（`vChewingDebuggable`）**已由 Q01 裁定不納入 5.10 側**，故此例外在本 phase 不會發生。
-4. **終點產物是「供 Xcode 鏈接的 `.a`」（事主 2026-09-15 新規 2）**：5.10 側的產物**不是**可執行檔，也**不是**可交付的 app。最終 binary 由 **Xcode ＋ macOS 13.3- SDK** 產出，並在該處完成 **libArcLite** 與 **macOS 10.9 compatible Swift Runtime** 的摻入；OpenSource toolchain 的職責到 `.a` 為止。此條同時解釋了為何本側不宣告任何執行檔靶（§4.1 表第七列）——**不是妥協，而是分工**。
+4. **終點產物是「供 Xcode 鏈接的 `.a`」（事主 2026-09-15 新規 2）**：5.10 側的產物**不是**可執行檔，也**不是**可交付的 app。最終 binary 由 **Xcode ＋ macOS 13.3- SDK** 產出，並在該處完成 **libArcLite** 與 **macOS 10.9 compatible Swift Runtime** 的摻入；OpenSource toolchain 的職責到 `.a` 為止。此條同時解釋了為何本側不宣告任何執行檔目標（§4.1 表第七列）——**不是妥協，而是分工**。
 
 ### 4.3 Unit Tests 不對 Swift 5.10 開放（事主 2026-09-15 追加規則）
 
 **規則原文**：「**Unit Tests 不對 Swift 5.10 開放。**」
 
-**通則**：**5.10 側 manifest 一律不宣告任何 test target**——含 **test-only 的素材靶／資料靶**（本倉的 `LXAssemblyMaterials4Tests`／`HomaSharedTestComponents` 即是）。測試**只在 6.2 側跑**（`swift test`，§十）。此條**已於 P216 在 LibVanguard 側如此實作，本條即其一般化**：P216 的 `Package@swift-5.10.swift` 正是把 `Tests/` 全目錄、9 個 testTarget、2 個素材靶與 `vChewingSharedCLI` 一併排除（§3.1 checklist 第 12 列）。逐套件的「待砍」量見 §3.1 表（19 個之中 11 個有 testTarget）。
+**通則**：**5.10 側 manifest 一律不宣告任何 test target**——含 **test-only 的素材目標／資料目標**（本倉的 `LXAssemblyMaterials4Tests`／`HomaSharedTestComponents` 即是）。測試**只在 6.2 側跑**（`swift test`，§十）。此條**已於 P216 在 LibVanguard 側如此實作，本條即其一般化**：P216 的 `Package@swift-5.10.swift` 正是把 `Tests/` 全目錄、9 個 testTarget、2 個素材目標與 `vChewingSharedCLI` 一併排除（§3.1 checklist 第 12 列）。逐套件的「待砍」量見 §3.1 表（19 個之中 11 個有 testTarget）。
 
 三個層次的理由：
 
 1. **設施本身不在**：Swift Testing 等設施非 5.10 所及（`#expect`／`#require` 皆為巨集，本倉 74 檔／3096 處**全在 `Tests/`**——見 §5.4 之（一））。
 2. **目的只是「可建置」**：5.10 側的產物是供 Xcode 鏈接的 `.a`（§4.2 第 4 條），測試不在此路徑上。
-3. **靶分離**：testTarget 與其依賴會把 `Tests/` 拉進建置圖；不宣告即整段不編。
+3. **目標分離**：testTarget 與其依賴會把 `Tests/` 拉進建置圖；不宣告即整段不編。
 
 **連帶好處（可直接省下工作量）**：`Tests/` 目錄下現存的 6.x-only 語法因此**不必處理**——例如 `Packages/vChewing_OSNeutral_LibVanguard/Tests/LexiconAssemblyTests/_HomaTestShim.swift:9` 的 `nonisolated extension TestLX`（全倉非 `Deps/` 區域的 5 處標頭 `nonisolated` 之一）即屬此類，**不要動它**。
 
 **與 §2.4 的呼應**：逐套件的 5.10 makefile **不得**提供任何 test 目標（`.PHONY` 中不許出現 `test510` 之類）——本節講 manifest、§2.4 講 makefile、§5.3 鐵律六講鐵律，三處同源。
 
-**已作廢（原④，因 Q01 連帶作廢）**：原問題為「非出貨靶（`vChewingDebuggable`）若納入 5.10 側，其 minOS／triple 如何處置？」。Q01 已裁定該靶**不納入 5.10 側**，故其產物形態問題**不存在**——本節與 §4.2 第 3 條之例外條款在本 phase **不會被觸發**。**此項自此結案，不再是待辦。**
+**已作廢（原④，因 Q01 連帶作廢）**：原問題為「非出貨目標（`vChewingDebuggable`）若納入 5.10 側，其 minOS／triple 如何處置？」。Q01 已裁定該目標**不納入 5.10 側**，故其產物形態問題**不存在**——本節與 §4.2 第 3 條之例外條款在本 phase **不會被觸發**。**此項自此結案，不再是待辦。**
 
 ---
 
@@ -475,7 +475,7 @@ P216 的 codemod 腳本留在工作區：`_MainWorkspace/tmp/p126pushdown.py`（
 3. **不得放寬 `swiftLanguageVersions`。** 5.10 側固定 `[.v5]`。
 4. **不得動已定讞的 `Deps/VanguardSwiftExtension`**（含其四份 manifest 與 `Sources/`）——它是 I2 的錨點；動它即同時打破兩倉 byte-sync。
 5. **不得讓 SwiftUI 之任何內容裸露於 5.10 可編的路徑上（事主 2026-09-15 新規 4）。** 範圍含 SwiftUI 本體與一切相關 Swift macro——**明確含 `#Preview`**（事主 2026-09-15 追加規則；機理與範圍界定見 §5.1(f)）**與 `@Observable`**。一律以 inline compiler condition 圈進 `#if compiler(>=6.2)`，<6.2 分支**不提供替代實作**；`#Preview` 所在處須**整段包住**（含其內宣告的 preview 專用型別）。**操作上的意涵**：5.10 側根本不會編到這些碼，故「`Observation` 等 macOS 14 期模組是否隨 MacOSX13.3.sdk 提供」、「`PreviewsMacros` 外掛是否可得」**皆不構成 P217 的技術風險**——這正是本條的價值所在。
-6. **Unit Tests 不對 Swift 5.10 開放（事主 2026-09-15 追加規則）。** 5.10 側 manifest **不得宣告任何 test target**，亦**不得宣告 test-only 的素材靶／資料靶**；逐套件的 5.10 makefile **不得提供 test 目標**。測試只在 6.2 側跑。此條之一般化依據與逐套件的「待砍」量見 §4.3 與 §3.1；**它同時是 §九「⓪ 基礎設施先鋪」能成立的前提**——若 5.10 側還要兼顧測試，逐包驗證的最小單位就不存在了。**注意區分（事主 2026-09-15 補述）**：§2.4 的逐包 makefile 所提供的 `make build510` 是**可建置性驗證（compilation test），不是單元測試**——前者在 5.10 側做、後者只在 6.2 側做，兩者互補而不衝突。
+6. **Unit Tests 不對 Swift 5.10 開放（事主 2026-09-15 追加規則）。** 5.10 側 manifest **不得宣告任何 test target**，亦**不得宣告 test-only 的素材目標／資料目標**；逐套件的 5.10 makefile **不得提供 test 目標**。測試只在 6.2 側跑。此條之一般化依據與逐套件的「待砍」量見 §4.3 與 §3.1；**它同時是 §九「⓪ 基礎設施先鋪」能成立的前提**——若 5.10 側還要兼顧測試，逐包驗證的最小單位就不存在了。**注意區分（事主 2026-09-15 補述）**：§2.4 的逐包 makefile 所提供的 `make build510` 是**可建置性驗證（compilation test），不是單元測試**——前者在 5.10 側做、後者只在 6.2 側做，兩者互補而不衝突。
 
 ### 5.4 本倉現況普查（2026-09-15，動工前；**不含 `Deps/`**，該處已於 P216 處置完畢）
 
@@ -542,7 +542,7 @@ grep -rn --include=*.swift -E '#externalMacro|@freestanding|@attached|MacroImple
 | `#expect` | 3096 | 74 | Swift Testing 巨集；**74 檔全在 `Tests/`**（實查：非 `Tests/` 者 **0** 檔）→ 5.10 側不編，無須處理 |
 | `#require` | 45 | 13 | 同上（全在 `Tests/`） |
 | `#_sourceLocation` | 1 | 1 | 同上（`HotenkaTests/HotenkaTestSupport.swift:36`） |
-| `#bundle` | 1 | 1 | Foundation 巨集；位於 `Sources/LXAssemblyMaterials4Tests/TestData.swift:29`——**測試材料靶**，5.10 manifest 不宣告該靶，無須處理 |
+| `#bundle` | 1 | 1 | Foundation 巨集；位於 `Sources/LXAssemblyMaterials4Tests/TestData.swift:29`——**測試材料目標**，5.10 manifest 不宣告該目標，無須處理 |
 | 其他 `#` token | — | — | **皆非巨集**：`#available`(130)／`#if`(76)／`#endif`(71)／`#selector`(77)／`#unavailable`(32)／`#else`(29)／`#elseif`(9)／`#error`(5)／`#line`(2)／`#function`(2)／`#filePath`(1)／`#dsohandle`(1) 為**語言內建指令**；`#PRAGMA`(69／7 檔) 與 `#D41J0U8U`(1)、`#import`(2) 為**假陽性**——前者是 `Tests/` 內字串常值與註解中的詞庫檔格式標記（`#PRAGMA:VANGUARD_HOMA_LEXICON_*`），後兩者是字串內的密碼遮蔽字樣與註解引述之 ObjC 標頭 |
 
 **（二）巨集屬性（attached macro）**
@@ -575,12 +575,12 @@ grep -rn --include=*.swift -E '#externalMacro|@freestanding|@attached|MacroImple
 | `#Preview` | 13 | `vChewing_SettingsUI`（`SettingsCocoa/VwrSettingsPaneCocoa*` 12 ＋ `SettingsCocoa/VwrSettingsCocoaPanes.swift` 1） | **收斂**（第 2 位） |
 | `#Preview` | 2 | `vChewing_CandidateWindow`（`TDK4AppKit/_GSI4AppKit_Previews.swift`、`TDK4AppKit/_TDK4AppKit_Previews.swift`） | **收斂**（第 3 位） |
 | `#Preview` | 1 | `vChewing_InstallerAssembly4Darwin`（`AppKit/VwrAppInstaller4Cocoa.swift:645`） | **收斂**（第 1 位） |
-| `#Preview` | 1 | `Sources/vChewingDebuggable/ContentView.swift:472` | **非出貨靶；不納入 5.10 側**（Q01）——故**不需圈隔**，列此僅為數字完整 |
+| `#Preview` | 1 | `Sources/vChewingDebuggable/ContentView.swift:472` | **非出貨目標；不納入 5.10 側**（Q01）——故**不需圈隔**，列此僅為數字完整 |
 | `@Observable` | 1 | `vChewing_Shared_DarwinImpl`（`PEReloadEventObserver.swift:12`） | **擊破**（L2） |
 | `@Observable` | 1 | `vChewing_SettingsUI`（`SettingsUIViewModel.swift:12`） | **收斂** |
 | `@Bindable` | 3（1 檔） | `vChewing_SettingsUI`（`VwrSettingsUI.swift`） | **收斂** |
 
-**結論**：巨集圈隔**幾乎全數落在收斂階段**——17 處 `#Preview` 之中有 **16 處**位於收斂序的三個元件（`SettingsUI` 13、`CandidateWindow` 2、`InstallerAssembly4Darwin` 1），僅 **1 處**在非出貨靶；`@Observable`／`@Bindable` 亦集中於 `SettingsUI`。擊破階段唯一觸及者是 `Shared_DarwinImpl` 的 **1 處** `@Observable`。故**巨集圈隔不是均勻分布的工作，而是收斂階段的主要工作量來源之一**（見 §十二 R19）。
+**結論**：巨集圈隔**幾乎全數落在收斂階段**——17 處 `#Preview` 之中有 **16 處**位於收斂序的三個元件（`SettingsUI` 13、`CandidateWindow` 2、`InstallerAssembly4Darwin` 1），僅 **1 處**在非出貨目標；`@Observable`／`@Bindable` 亦集中於 `SettingsUI`。擊破階段唯一觸及者是 `Shared_DarwinImpl` 的 **1 處** `@Observable`。故**巨集圈隔不是均勻分布的工作，而是收斂階段的主要工作量來源之一**（見 §十二 R19）。
 
 **（五）兩個必須記住的細節**
 
@@ -613,7 +613,7 @@ grep -rn --include=*.swift -E '#externalMacro|@freestanding|@attached|MacroImple
 
 ### 6.1 兩側的隔離落差
 
-- **6.2 側**：`defaultIsolation(MainActor.self)` 出現於**全部 21 份 manifest**（根 1 ＋ `Packages/*` 19 ＋ 巢狀子套件 1），但**逐靶掛**——聚合體內有**四個**靶**刻意不在名單上**（實查其 `swiftSettings` 為空）：**`ResourceLocator`、`TrieKit`、`Tekkon`、`Homa`**。其中 **`Tekkon` 與 `Homa` 即事主裁定 Q05 所稱者**——「已經相容，都在 P216 解決了；這兩個 target 的建置**沒有被釘死在 MainActor 上**」，故其 `nonisolated(unsafe)` 合法且與 legacy 同步（§6.4）。實務含義：**其餘全體回 MainActor**。
+- **6.2 側**：`defaultIsolation(MainActor.self)` 出現於**全部 21 份 manifest**（根 1 ＋ `Packages/*` 19 ＋ 巢狀子套件 1），但**逐目標掛**——聚合體內有**四個**測試用例**刻意不在名單上**（實查其 `swiftSettings` 為空）：**`ResourceLocator`、`TrieKit`、`Tekkon`、`Homa`**。其中 **`Tekkon` 與 `Homa` 即事主裁定 Q05 所稱者**——「已經相容，都在 P216 解決了；這兩個 target 的建置**沒有被釘死在 MainActor 上**」，故其 `nonisolated(unsafe)` 合法且與 legacy 同步（§6.4）。實務含義：**其餘全體回 MainActor**。
 - **5.10 側**：無此 `SwiftSetting`（tools 6.2 起才有）。此落差曾以 **1771 筆錯誤**（1052 ＋ 719）的形式爆發，看似硬仗，實則**只有兩個根因，一刀可解**。
 - **那一刀**：把 `@MainActor` 自協定撤除，改採 legacy 的寫法（事主原話：「Legacy 怎麼寫，你就怎麼寫；你把 `@MainActor` 從 Protocol 撤掉」）。P216 實查 legacy 倉本來就沒有宣告層級的 `@MainActor`，**只改 3 行**即令 1052 ＋ 719 一併歸零。
 - **機理**：協定一旦不再是 `@MainActor`，5.10 側整個層就是**全體一致的 nonisolated**，主客體之間的隔離落差消失；而 6.2 側因 `defaultIsolation`，協定拿掉顯式標註後**仍然是 MainActor**、語義不變。**這是唯一的「單一形態、零取捨」大手術**，P217 若再遇同型錯誤，先找協定同構，不要逐成員補標註。
@@ -667,14 +667,14 @@ func withFileHandleQueueSync<T>(_ body: () throws -> T) rethrows -> T {
 
 既然全體回到 MainActor，`NSMutex` 保護的共享狀態即可改回普通 stored property。**但有四個例外**：**`ResourceLocator`、`TrieKit`、`Tekkon`、`Homa`** **不在** `defaultIsolation` 名單上（實查其 `swiftSettings` 為空，與 §6.1 一致），故 `NSMutex` 這個型別本身仍須能從 nonisolated 情境使用——其定義留在 `Deps/VanguardSwiftExtension`，以 `#if compiler(>=6.2)`／<6.2 兩分支分隔。**P217 不得為「清乾淨」而把它拆掉。**
 
-**已定案（事主裁定 Q05）：`Tekkon.sharedCache` 不用處理，且 `Tekkon`／`Homa` 兩靶不在 `defaultIsolation` 的施行範圍內。**
+**已定案（事主裁定 Q05）：`Tekkon.sharedCache` 不用處理，且 `Tekkon`／`Homa` 兩目標不在 `defaultIsolation` 的施行範圍內。**
 
 事主原文：「**Tekkon 與 Homa 都不用處理**，因為已經相容，**都在 P216 解決了**。這兩個 target 的建置**沒有被釘死在 MainActor 上**，且 Legacy 倉庫的寫法目前也是 `nonisolated(unsafe) private static var sharedCache: [Int: PinyinTrie] = [:]`。」
 
 三點落地：
 
-1. **`Tekkon` 與 `Homa` 兩靶不納入 default isolation 的施行範圍**——該兩靶在 **P216 已達成雙 toolchain 相容**（P216 全倉最終只剩 1 處 `#if compiler(>=6.2)`，且不涉及它們的隔離）。故其 `nonisolated(unsafe)` **非但可留、且與 legacy 同步**（legacy 寫法逐字相同）。
-2. **`Packages/vChewing_OSNeutral_LibVanguard/Sources/Tekkon/Tekkon_PinyinTrie.swift:110` 的 `nonisolated(unsafe) private static var sharedCache` 維持原樣**，P217 不動它——既不搬進 Sendable 盒、也不為它改 manifest。（本條與 §6.1 所載「`TrieKit`／`Tekkon` 兩靶不在 `defaultIsolation` 名單」**一致**：正因不在名單，才需要且允許 `nonisolated(unsafe)`。）
+1. **`Tekkon` 與 `Homa` 兩目標不納入 default isolation 的施行範圍**——該兩目標在 **P216 已達成雙 toolchain 相容**（P216 全倉最終只剩 1 處 `#if compiler(>=6.2)`，且不涉及它們的隔離）。故其 `nonisolated(unsafe)` **非但可留、且與 legacy 同步**（legacy 寫法逐字相同）。
+2. **`Packages/vChewing_OSNeutral_LibVanguard/Sources/Tekkon/Tekkon_PinyinTrie.swift:110` 的 `nonisolated(unsafe) private static var sharedCache` 維持原樣**，P217 不動它——既不搬進 Sendable 盒、也不為它改 manifest。（本條與 §6.1 所載「`TrieKit`／`Tekkon` 兩目標不在 `defaultIsolation` 名單」**一致**：正因不在名單，才需要且允許 `nonisolated(unsafe)`。）
 3. **注意其在共享 `Sources/` 內**：若日後真要動它，仍觸發 I2 的兩倉鏡像——但本 phase 已定為不動。
 
 **已定案（事主裁定 Q06）：`withFileHandleQueue*` 不用退役**，並樹立三條紀律（**詳見 §6.2**，該處為本裁定之正本）：Queue 只管**觸發時機**、內容一律以 `mainSync {}` 觸發（**禁用 `{ @MainActor in }` 等不相容寫法**）、**POM 相關 Queue 同理**、以及**同一檔案不得被多個 Actor 同時讀寫**。
@@ -775,7 +775,7 @@ grep -rn --include=*.swift '@backDeployed' Sources Packages | grep -v '/Deps/'  
 
 | 產出 | 數量 | 規格出處 |
 |---|---|---|
-| `Package@swift-5.10.swift` | 19 | §3.1（含 §四 的產物形態要求：`.static`／`platforms: nil`／無測試靶） |
+| `Package@swift-5.10.swift` | 19 | §3.1（含 §四 的產物形態要求：`.static`／`platforms: nil`／無測試目標） |
 | `Package@swift-6.0.swift`（封堵檔） | 19 | §3.1 |
 | `Package@swift-6.1.swift`（封堵檔） | 19 | §3.1 |
 | `makefile`（逐套件） | 19（其中 2 個既存、1 個已含 5.10 側） | §2.4 |
@@ -794,15 +794,15 @@ grep -rn --include=*.swift '@backDeployed' Sources Packages | grep -v '/Deps/'  
 
 | 位次 | 事主用名（＝產品名） | 目錄名（＝ SwiftPM identity） | 依賴深度 | testTarget | 巢狀 `Deps/` | 備註 |
 |---|---|---|---|---|---|---|
-| 1 | `SwiftyCapsLockToggler` | `HangarRash_SwiftyCapsLockToggler` | 1 | 0 | 無 | 帶 C 靶；**擊破起點、首支探針**（§9.6） |
+| 1 | `SwiftyCapsLockToggler` | `HangarRash_SwiftyCapsLockToggler` | 1 | 0 | 無 | 帶 C 目標；**擊破起點、首支探針**（§9.6） |
 | 2 | `BookmarkManager` | `Jad_BookmarkManager` | 1 | 1 | 無 | 下游有 `SettingsUI`（第 17 位） |
 | 3 | `FolderMonitor` | `vChewing_FolderMonitor` | 1 | 0 | 無 | |
 | 4 | `Hotenka` | `vChewing_Hotenka` | 1 | 1 | 無 | 無任何本地依賴 |
-| 5 | `IMKUtils` | `vChewing_IMKUtils` | 1 | 0 | 無 | 帶 C 靶；**四支下游**（10／12／17） |
+| 5 | `IMKUtils` | `vChewing_IMKUtils` | 1 | 0 | 無 | 帶 C 目標；**四支下游**（10／12／17） |
 | 6 | `ModifierKeyHitChecker` | `vChewing_ModifierKeyHitChecker` | 1 | 0 | 無 | |
 | 7 | `OtherIMEDataReader` | `vChewing_OtherIMEDataReader` | 1 | 1 | 無 | 無任何本地依賴 |
 | 8 | `UpdateSputnik` | `vChewing_UpdateSputnik` | 1 | 0 | 無 | |
-| 9 | `OSFrameworkImpl` | `vChewing_OSFrameworkImpl` | 1 | 1 | 無 | 帶 ObjC 靶；**四支下游**（10／11／12／17） |
+| 9 | `OSFrameworkImpl` | `vChewing_OSFrameworkImpl` | 1 | 1 | 無 | 帶 ObjC 目標；**四支下游**（10／11／12／17） |
 | 10 | `Shared_DarwinImpl` | `vChewing_Shared_DarwinImpl` | 2 | 1 | 無 | 四支下游（13～16） |
 | 11 | `Uninstaller` | `vChewing_Uninstaller` | 2 | 0 | 無 | |
 | **12** | **`InstallerAssembly4Darwin`** | **`vChewing_InstallerAssembly4Darwin`** | **2** | 1 | 無 | **← 事主追裁「可早收」，自第 17 位前移至此**（原話次序為第 17 位）；與同深度的 10／11 同組收掉；此舉令全序**恢復深度單調**（§9.4 之（一）） |
@@ -862,7 +862,7 @@ grep -rn --include=*.swift '@backDeployed' Sources Packages | grep -v '/Deps/'  
 ### 9.6 先做什麼可以得到最大資訊量（依序）
 
 0. **【⓪，資訊量最大】把 19 個 subpackage 的三份版本檔 ＋ makefile 一次鋪完，19 個各跑一次 `make build510`，把失敗清單記下來。** 同時產出三樣東西——**（a）① 的完整工單**（哪幾包只差 manifest、哪幾包真有語法問題）；**（b）環境配對的驗證**（SDK／triple／scratch 三項是否如 §2.1 所述生效）；**（c）逐包驗收的入口**。成本是機械性的（19 × 4 檔，且模板已備於 §2.4 與 §3.1），收益卻是整條擊破路線的地圖。**先做這個，再動任何一行碼。**
-1. **首項即第 1 位的 `HangarRash_SwiftyCapsLockToggler`（1 檔 ＋ 1 個 C 靶）**：把「三份版本檔 ＋ makefile ＋ 5.10 建置」跑通一次，得到本倉的樣板。**在 ① 之中，這一步的資訊量最大**——它同時驗證 SDK 配對、版本擇定、scratch 隔離、static 產物四件事，且順帶驗到 C 靶的搬運，成本卻只有一個檔。（**與事主序一致**：它本就是第 1 位。）
+1. **首項即第 1 位的 `HangarRash_SwiftyCapsLockToggler`（1 檔 ＋ 1 個 C 目標）**：把「三份版本檔 ＋ makefile ＋ 5.10 建置」跑通一次，得到本倉的樣板。**在 ① 之中，這一步的資訊量最大**——它同時驗證 SDK 配對、版本擇定、scratch 隔離、static 產物四件事，且順帶驗到 C 目標的搬運，成本卻只有一個檔。（**與事主序一致**：它本就是第 1 位。）
 2. **第 9 位的 `OSFrameworkImpl` 是 ① 階段的重點**：它是**最多套件的上游**（`Shared_DarwinImpl`／`Uninstaller`／`InstallerAssembly`／`SettingsUI` 都吃它），手上有 `@backDeployed` shim（§七）與兩個**無法下放的巢狀 `nonisolated` 型別**（§5.4），正好把 §5.1(c) 與 §七 的打樣做完。**位次 9 剛好落在九個深度 1 套件的末位，是個天然的檢查點**——到此為止，深度 1 應全綠。
    - **接著的第 10～12 位是深度 2 的三連**（`Shared_DarwinImpl` → `Uninstaller` → **`InstallerAssembly4Darwin`**）；其中 **`InstallerAssembly4Darwin`（第 12 位）是事主裁定「可早收」者**，收掉它即**達成規則 2 的第一支終點產物**（另一支 `MainAssembly` 在第 18 位）。**這是一個適合對外報進度的里程碑。**
 3. **`MainAssembly4Darwin` 的 `UserPhraseImpl.swift` 單檔試點**：它是最大的 shim（6 個宣告、12 個呼叫點），單檔可獨立驗，且不牽動其他 package。可在 ① 階段的空檔先做此單檔（不觸發該包的整體驗收）。
@@ -885,9 +885,9 @@ grep -rn --include=*.swift '@backDeployed' Sources Packages | grep -v '/Deps/'  
 
 故 `Packages/Makefile` 現行的七個目標（`all`／`debug`／`release`／`clean`／`lint`／`format`／`lintFormat`，皆指向 `vChewing_MainAssembly4Darwin`）**應增列 5.10 側的目標**（例如 `build510-*` 一族，指入各 subpackage 的 `makefile` 或直接跑根 `Makefile` 的對應目標）；**而 app 側的 xcodeproj 建置，本 phase 不碰。**
 
-**已定案（事主裁定 Q09）：`vChewing-VanguardLexicon` 不處理。** 事主原文：「**已經與 Swift 5.10 相容。**現階段不用處理。**Swift 版本低於 5.10 的時候會自動報錯。**」　**（2026-09-16 補充：本裁定意謂「本 phase 不動該倉」；惟其後實測顯示該套件在 5.10 SwiftPM 之**依賴層**仍不可消費——其兩支 plugin 產品的 `CSQLite3` 靶帶 `.unsafeFlags(["-w"])`。故「改該倉」之事已另立為 §十四 **N4**，不與本裁定衝突：Q09 說的是本 phase 不處理，N4 記的是「下一 phase 若要讓 MainAssembly 於 5.10 側可建置，則必須由該倉出新版」。）**
+**已定案（事主裁定 Q09）：`vChewing-VanguardLexicon` 不處理。** 事主原文：「**已經與 Swift 5.10 相容。**現階段不用處理。**Swift 版本低於 5.10 的時候會自動報錯。**」　**（2026-09-16 補充：本裁定意謂「本 phase 不動該倉」；惟其後實測顯示該套件在 5.10 SwiftPM 之**依賴層**仍不可消費——其兩支 plugin 產品的 `CSQLite3` 目標帶 `.unsafeFlags(["-w"])`。故「改該倉」之事已另立為 §十四 **N4**，不與本裁定衝突：Q09 說的是本 phase 不處理，N4 記的是「下一 phase 若要讓 MainAssembly 於 5.10 側可建置，則必須由該倉出新版」。）**
 
-它同時是 `MainAssembly4Darwin`（**事主序第 18 位、② 之終點**）的遠端依賴與兩個 build plugin 的來源，故**該包在 5.10 側可建置的兩個已知前提已齊**：lexicon 本體相容（Q09）＋ 套件圖不需變更（§1.1）。**原列為「未實測」的那兩層，已於二輪複驗結清**（見 §13.4 第一點）：兩支 build plugin **5.10 SwiftPM 硬拒**（產品含 `CSQLite3` 靶帶 `.unsafeFlags(["-w"])`；非根套件的 unsafe flags 一律不准），故 **5.10 manifest 不收該遠端依賴與兩支 plugin**、`Package.resolved` 之相容性問題連帶無關——該包於 5.10 側自此**已達 rc=0 並產出 `libMainAssembly4Darwin.a`（26 MB）**。**§十二 R7 之三層懸案至此全部結清**（該條已改註）。**（2026-09-16 更新：該「不收」之取捨已依事主指示**翻轉**為與 `Package.swift` 同構——該 manifest 現收該遠端依賴與兩支 plugin，故該包於 5.10 側復歸 rc≠0（全倉 18／19）。正解須由 lexicon 倉出新版，見 §十四 N4。）**
+它同時是 `MainAssembly4Darwin`（**事主序第 18 位、② 之終點**）的遠端依賴與兩個 build plugin 的來源，故**該包在 5.10 側可建置的兩個已知前提已齊**：lexicon 本體相容（Q09）＋ 套件圖不需變更（§1.1）。**原列為「未實測」的那兩層，已於二輪複驗結清**（見 §13.4 第一點）：兩支 build plugin **5.10 SwiftPM 硬拒**（產品含 `CSQLite3` 目標帶 `.unsafeFlags(["-w"])`；非根套件的 unsafe flags 一律不准），故 **5.10 manifest 不收該遠端依賴與兩支 plugin**、`Package.resolved` 之相容性問題連帶無關——該包於 5.10 側自此**已達 rc=0 並產出 `libMainAssembly4Darwin.a`（26 MB）**。**§十二 R7 之三層懸案至此全部結清**（該條已改註）。**（2026-09-16 更新：該「不收」之取捨已依事主指示**翻轉**為與 `Package.swift` 同構——該 manifest 現收該遠端依賴與兩支 plugin，故該包於 5.10 側復歸 rc≠0（全倉 18／19）。正解須由 lexicon 倉出新版，見 §十四 N4。）**
 
 ---
 
@@ -1072,7 +1072,7 @@ cmp "$LV/makefile" "$MAC/Packages/vChewing_OSNeutral_LibVanguard/makefile"
 4. **R4｜部署目標會被 SwiftPM 吞掉**：`platforms: [.macOS(.v10_10)]` 與 `--triple` 都被抬到工具鏈地板（x86_64 為 10.13）；arm64 更被 linker 釘在 `minos 11.0`。**唯一有效的是 `-Xswiftc -target`。**
 5. **R5｜`#if compiler(>=6.2)` 只夾修飾符＝無效**：5.10 之所以「通過」只是整個分支被編掉；6.x 會報 `cannot find 'nonisolated' in scope`。**只能整段宣告各寫一份。**
 6. **R6｜struct 的儲存屬性不可標 `nonisolated`**：5.10 是 `'nonisolated' is redundant on struct's stored properties`，Swift 6 直接是**錯誤**。此條曾誤導過 P216 的方向。
-7. **R7｜遠端依賴與 build plugin 在 5.10 側未實測 ——【已結清：5.10 SwiftPM 不可消費（2026-09-15 二輪複驗）；取捨於 2026-09-16 翻轉】**：**三層之最終狀態**——（i）lexicon 本體相容：**已由事主裁定 Q09 確定**；（ii）`Package.resolved`（`"version": 3` ＋ `originHash`）：**因該依賴自 5.10 側退場而自動無關**；（iii）兩支 build plugin（`TextTemplateAssetInjectorPlugin`／`VanguardTextMapPlugin`）：**5.10 SwiftPM 硬拒**——其產品所含 `CSQLite3` 靶帶 `.unsafeFlags(["-w"])`，而非根套件的 unsafe flags 一律不准；`--disable-sandbox` 無效、乾淨解析仍復現、5.10 亦無允許之開關（**故 ③ 段一度記載的「沙箱假象」為誤判，已於 §13.4 更正**）。**處置沿革**：2026-09-15 之取捨為「5.10 manifest 不收該遠端依賴與兩支 plugin」，該包遂達 **rc=0、0 error** 並產出 `libMainAssembly4Darwin.a`（26 MB）；**2026-09-16 事主指示改回與 `Package.swift` 同構**（收該依賴與兩支 plugin），該包於 5.10 側因此**復歸 rc≠0**（全倉 18／19）。6.4 側之 `Package.swift` 兩時期皆原樣保留（新世代 SwiftPM 允准 plugin 靶的 unsafe flags）。**正解在 lexicon 倉**（移除 `CSQLite3` 之 `.unsafeFlags(["-w"])` 並使其 plugin 產品的平台宣告不低於本側）——見 §十四 **N4**。機理與完整紀錄見 **§13.4**。
+7. **R7｜遠端依賴與 build plugin 在 5.10 側未實測 ——【已結清：5.10 SwiftPM 不可消費（2026-09-15 二輪複驗）；取捨於 2026-09-16 翻轉】**：**三層之最終狀態**——（i）lexicon 本體相容：**已由事主裁定 Q09 確定**；（ii）`Package.resolved`（`"version": 3` ＋ `originHash`）：**因該依賴自 5.10 側退場而自動無關**；（iii）兩支 build plugin（`TextTemplateAssetInjectorPlugin`／`VanguardTextMapPlugin`）：**5.10 SwiftPM 硬拒**——其產品所含 `CSQLite3` 目標帶 `.unsafeFlags(["-w"])`，而非根套件的 unsafe flags 一律不准；`--disable-sandbox` 無效、乾淨解析仍復現、5.10 亦無允許之開關（**故 ③ 段一度記載的「沙箱假象」為誤判，已於 §13.4 更正**）。**處置沿革**：2026-09-15 之取捨為「5.10 manifest 不收該遠端依賴與兩支 plugin」，該包遂達 **rc=0、0 error** 並產出 `libMainAssembly4Darwin.a`（26 MB）；**2026-09-16 事主指示改回與 `Package.swift` 同構**（收該依賴與兩支 plugin），該包於 5.10 側因此**復歸 rc≠0**（全倉 18／19）。6.4 側之 `Package.swift` 兩時期皆原樣保留（新世代 SwiftPM 允准 plugin 目標的 unsafe flags）。**正解在 lexicon 倉**（移除 `CSQLite3` 之 `.unsafeFlags(["-w"])` 並使其 plugin 產品的平台宣告不低於本側）——見 §十四 **N4**。機理與完整紀錄見 **§13.4**。
 8. **R8｜`make lint` 是全倉 auto-fix**：P216 誤跑一次，**改動 84 個無關檔案**。交差前只用 `make lintFormatUncommitted`。
 9. **R9｜單獨跑一支工具的中間態不可作判準**：判準永遠是 `make lintFormat` 跑完之後樹上有什麼。
 10. **R10｜`match_kinds` 讓 `custom_rules` 靜默失效**：swiftlint 0.61.0 下完全不觸發；且 `--fix` 模式下自訂規則不報。要寫絆線一律用**行首錨定**。
@@ -1084,8 +1084,8 @@ cmp "$LV/makefile" "$MAC/Packages/vChewing_OSNeutral_LibVanguard/makefile"
 16. **R16｜同套件 dynamic product 靜默產出兩份 image**：SwiftPM 對此**不報錯**（探針 D／E），只能靠 I1 的紅線在人工層面守。
 17. **R17｜SwiftUI 內容漏圈 `#if compiler(>=6.2)`（規則 4）**：全倉 30 檔 `import SwiftUI`（§5.4 普查）分布於 6 個元件，其中 `SettingsUI`（18 檔）與 `CandidateWindow`（4 檔）恰在收斂序上——漏圈的代價是 5.10 側一次噴出大量錯誤，而非單檔失敗。判準見 §5.1(f) 與 §5.3 鐵律五；**其中的巨集部分另見 R19**（兩者同源、但操作要點不同：R17 講「有哪些檔」，R19 講「漏掉時的具體陷阱」）。
 18. **R18｜`mainSync` 在「呼叫方可能已在 main」時自鎖（規則 7）**：與 R14 同源而形態不同——R14 是 `queue.sync { mainSync { … } }` 的**必死鎖**，本條是 `mainSync` **單獨使用**的潛在自鎖。處置見 §6.2（改用 `asyncOnMain`）；**`deinit` 內不適用**（§6.3）。
-19. **R19｜巨集圈隔是收斂階段的主要工作量來源之一（事主 2026-09-15 追加 `#Preview` 規則）**：全倉 **17 處 `#Preview`／17 檔**（§5.4 之（一）），其中 **16 處落在收斂序的三個元件**——`InstallerAssembly4Darwin` 1、`SettingsUI` 13、`CandidateWindow` 2——僅 1 處在非出貨靶；`@Observable`（3 處）與 `@Bindable`（3 處／1 檔）亦集中於 `SettingsUI`。**故這不是均勻分布的工作**：擊破階段幾乎不會遇到（唯一例外是 `Shared_DarwinImpl` 的 1 處 `@Observable`），收斂階段則會一次遇上全部。「各個擊破」在擊破階段的每個 package 上都很輕，但一到收斂階段成本陡增——**排程時須為收斂階段預留這塊**。**三個易錯點**：① 別把 `#Preview` 當「不影響出貨」而漏掉（它藏在 preview-only 碼裡）；② `@available(macOS 14, *)` 擋不住巨集展開（`VwrSettingsCocoaPanes.swift:95-98` 即為實例）；③ 只包修飾詞無效，必須**整段包住**（含 preview 專用型別）。
-20. **R20｜跳過第 0 步就動碼＝把「各個擊破」弄丟（事主 2026-09-15 兩條基礎設施規則）**：若未先鋪逐套件 manifest 與 makefile 便開始改碼，驗證就只能靠整倉建置，於是「一次一包」在操作上不可行、退化成「一次一堆」；且 manifest 層的失敗（版本擇定錯、`platforms` 沒填 `nil`、測試靶沒砍）會與語法錯誤混在同一次輸出裡，**難以歸因**。**第 0 步的全部價值就在把這兩類失敗分開**（§9.2／§9.6 第 0 點）。**兩個相關易錯點**：① 逐套件的 `.build/.legacy` 若沒各自獨立，19 個 package 會互踩（＝R3 的放大版）；② 照抄聚合體那份既有 makefile 時，別把它的 `test`／`test-debug`／`dockertest` 目標也當成 5.10 側的目標——那些是 6.2 側的（鐵律六）。
+19. **R19｜巨集圈隔是收斂階段的主要工作量來源之一（事主 2026-09-15 追加 `#Preview` 規則）**：全倉 **17 處 `#Preview`／17 檔**（§5.4 之（一）），其中 **16 處落在收斂序的三個元件**——`InstallerAssembly4Darwin` 1、`SettingsUI` 13、`CandidateWindow` 2——僅 1 處在非出貨目標；`@Observable`（3 處）與 `@Bindable`（3 處／1 檔）亦集中於 `SettingsUI`。**故這不是均勻分布的工作**：擊破階段幾乎不會遇到（唯一例外是 `Shared_DarwinImpl` 的 1 處 `@Observable`），收斂階段則會一次遇上全部。「各個擊破」在擊破階段的每個 package 上都很輕，但一到收斂階段成本陡增——**排程時須為收斂階段預留這塊**。**三個易錯點**：① 別把 `#Preview` 當「不影響出貨」而漏掉（它藏在 preview-only 碼裡）；② `@available(macOS 14, *)` 擋不住巨集展開（`VwrSettingsCocoaPanes.swift:95-98` 即為實例）；③ 只包修飾詞無效，必須**整段包住**（含 preview 專用型別）。
+20. **R20｜跳過第 0 步就動碼＝把「各個擊破」弄丟（事主 2026-09-15 兩條基礎設施規則）**：若未先鋪逐套件 manifest 與 makefile 便開始改碼，驗證就只能靠整倉建置，於是「一次一包」在操作上不可行、退化成「一次一堆」；且 manifest 層的失敗（版本擇定錯、`platforms` 沒填 `nil`、測試目標沒砍）會與語法錯誤混在同一次輸出裡，**難以歸因**。**第 0 步的全部價值就在把這兩類失敗分開**（§9.2／§9.6 第 0 點）。**兩個相關易錯點**：① 逐套件的 `.build/.legacy` 若沒各自獨立，19 個 package 會互踩（＝R3 的放大版）；② 照抄聚合體那份既有 makefile 時，別把它的 `test`／`test-debug`／`dockertest` 目標也當成 5.10 側的目標——那些是 6.2 側的（鐵律六）。
 21. **R21｜同一檔案被多個 actor 同時讀寫（事主裁定 Q06 之第三條紀律）**：**佇列的序列性只保證「同一佇列上的任務不並行」，不保證「同一檔案不被兩個 actor 同時碰」**——這是全 §六 最容易被「反正都回到 MainActor 了」這個印象蓋掉的一條。凡同一路徑／同一 handle 可能同時被 MainActor 與某個非 MainActor 上下文觸及者，**必須收斂到單一 actor**（本 phase 即收斂到 MainActor）或有明確互斥；**不得**以「都在一個 Queue 上」推論其安全。**易錯場景**：`withFileHandleQueueSync` 的呼叫端在 MainActor、而閉包內又去碰「已由 MainActor 持有的同一 handle」——此時若任一側改走 `asyncOnMain` 或另開佇列，即可能同時讀寫。**另兩條配套紀律見 §6.2.1**（Queue 只管觸發時機；一律以 `mainSync {}` 觸發、禁用 `{ @MainActor in }`）。
 22. **R22｜Swift 6.2／6.3 對「default-isolated 下游型別遵循 default-isolated 上游協定」要求明文 `@MainActor`（`#ConformanceIsolation`）**：本倉（以及整個 6.2 側）是 default-isolation（MainActor）的，故凡 class 遵循「由 default-isolated 模組宣告、或經該處協定繼承而來的協定」者，在 6.2／6.3 下會是**硬錯**：`conformance of 'X' to protocol 'P' crosses into main actor-isolated code and can cause data races`，note 要求 `isolate this conformance to the main actor with '@MainActor'`。**本 phase 不處理**（P217 是 5.10 側的相容手術，此病只在 6.2／6.3 的 6.x 側發作；且編譯器要的那種 conformance 隔離語法 5.10 拒收、在型別上新增 `@MainActor` 又違反 P216 §七 的硬約束）。**緩解手段＝「Swift 6.x ⇒ 6.4+ only」的封堵清單**：6.2／6.3 各加一份 `#error` 封堵檔，`Package.swift` 宣告值一併抬到 6.4（**方案 B**；方案 A——只加封堵檔、不動 `Package.swift`——實測會把 6.4 一起封死，**不可採**）。詳見 **P216 §13.6**（含 6.3.3 實測：中招者恰為 `InputSession` 與 `InputHandler` 兩個 conformance；子套件不中招）與 §十四 N3。**易錯點**：① 這條與 R15 方向相反、極易混淆——R15 禁的是「為消錯而在型別／成員上**新增** `@MainActor`」（殺死 ≤10.14 相容性），本條講的是 6.2／6.3 反過來**索要**同一個東西；兩者無解的交集就是「棄 6.2／6.3」這個結論。② 封堵令生效前，**三系統 CI 必須先抬到 6.4**，否則 CI 會比使用者更早趴（P216 §13.6.4 代價第 2 條）。
 
@@ -1108,9 +1108,9 @@ cmp "$LV/makefile" "$MAC/Packages/vChewing_OSNeutral_LibVanguard/makefile"
     - **(a) 一律 `swift test --no-parallel`。** 本倉的測試共用大量**行程內靜態狀態**（`LXFacade` 的 `factoryTrie`／`lxCassette`、`PrefMgr.shared`、`SessionHost.shared` 等），並行執行即互相踩踏。**落實處**：逐包 `makefile` 的 `test`／`test-debug`／`dockertest` 本來就帶此旗標（未動）；**倉根 `Makefile` 的 `test` 目標原本缺**，本輪補上（兩個 `swift test` 呼叫各加 `--no-parallel`，並註明理由）；**兩倉 CI 共 6 條 workflow 亦早已帶此旗標**（本倉 `test_darwin/ubuntu/winnt_LibVanguard.yml`；macOS 倉 `build_darwin_SPMTestsAndPackage.yml`／`test_ubuntu_LibVanguard.yml`／`test_winnt_LibVanguard.yml`）。**至此所有入口皆帶此旗標。**
       **⚠️ 判讀陷阱（本輪親歷）**：`--no-parallel` **只保證「同一時間只有一個測試函式在跑」，不保證「同步執行到完」**——非同步測試仍會在 `await` 的暫停點交錯。故「日誌顯示測試逐一進場」**不等於**「測試彼此無干擾」；本輪曾據此一度誤判為「已無並行」。
     - **(b) 所有測試 suite 一律標 `.serialized`（事主 2026-09-15 明令）。** **落實範圍與方式**：
-      - **`Tests/LibVanguardTests/`**：新增唯一根 suite **`LibVanguardTestsRoot`**（`LibVanguardTests_Root.swift`，標 `.serialized`），並把原先四個游離的頂層 suite（`InputHandlerTests`／`FuriousTypingSegmentorTests`／`ResourceProvisionTests`／`RomanNumeralTests`）**全部改寫成 `extension LibVanguardTestsRoot { … }` 巢狀宣告**；其餘各 `Cases*.swift` 之 `extension InputHandlerTests` 隨之改為 `extension LibVanguardTestsRoot.InputHandlerTests`。如此整靶落入**同一 serialized 子樹**，型別層即保證不並行。
-      - **`Tests/BrailleSputnikTests/`**：該靶唯一 suite 補上 `.serialized`（原缺）。
-      - 其餘靶（`LexiconAssemblyTests`／`TekkonTests`／`TrieKitTests`／`HomaTests`／`BPMFVSTests`／`SharedTests`／`ResourceLocatorTests`）經普查**原即全數帶 `.serialized`**，未動。
+      - **`Tests/LibVanguardTests/`**：新增唯一根 suite **`LibVanguardTestsRoot`**（`LibVanguardTests_Root.swift`，標 `.serialized`），並把原先四個游離的頂層 suite（`InputHandlerTests`／`FuriousTypingSegmentorTests`／`ResourceProvisionTests`／`RomanNumeralTests`）**全部改寫成 `extension LibVanguardTestsRoot { … }` 巢狀宣告**；其餘各 `Cases*.swift` 之 `extension InputHandlerTests` 隨之改為 `extension LibVanguardTestsRoot.InputHandlerTests`。如此整目標落入**同一 serialized 子樹**，型別層即保證不並行。
+      - **`Tests/BrailleSputnikTests/`**：該目標唯一 suite 補上 `.serialized`（原缺）。
+      - 其餘目標（`LexiconAssemblyTests`／`TekkonTests`／`TrieKitTests`／`HomaTests`／`BPMFVSTests`／`SharedTests`／`ResourceLocatorTests`）經普查**原即全數帶 `.serialized`**，未動。
       **新增測試時**：新 suite 一律寫成 `extension LibVanguardTestsRoot { … }` 並在其內宣告 `@Suite(…, .serialized)`，**不得新增游離於根之外、或未標 `.serialized` 的頂層 suite**。
     - **(c) `LXFacade.asyncLoadingUserData` 在單元測試下必須為 `false`（事主 2026-09-15 定案）——凡涉及 userdata 載入的測試一律走同步載入。** 測試要的是**確定性**：資料須在斷言之前**載入完畢**，不得留下「等等才會落定」的非同步尾巴。故生產碼把該開關與測試模式綁定——`resetSharedResources()` 與 `applyEnvironmentDefaults()` 皆寫 `= !UserDefaults.pendingUnitTests`（**單元測試 ⇒ `false`**）；測試側於需要時自行 `= false` 並以 `defer` 還原原值。**本輪補齊的最後一處**：`test_IH400_MixedAlnumKanjiInputTest_Izanami`（`InputHandlerTests_Cases4.swift`）——它是唯一跑遍整個注音表、大量觸及 userdata 卻**未**壓同步的測試，其餘九支磁帶測試（`Cases1`）皆有壓。該處即前述「時過時不過」抖動的來源：補上之後，**兩倉各連跑 5 次 `--no-parallel` 全綠（535 項、0 issue）**。
       **⚠️ 本條曾有過一次方向性誤判，留檔以示警戒（2026-09-15 當晚）**：本 SOP 一度把此條寫成「恆為 `true`、測試亦不例外」，並據以改動生產碼與測試（撤除 `restoreAsyncLoadingStrategy`、改以 `await LXATestsData.waitUntil(...)` 等待非同步載入）。**該方向已由事主推翻並全部還原**（兩倉該七檔回到 `false` 語義、逐位元組同步）。**教訓**：測試的載入策略屬**產品決策**，不是施工者可自行推論的技術細節——「測試未覆蓋非同步路徑」確是事實，但**權衡的結果是選確定性**；施工者不得以該事實為由逕自翻轉語義。同類事項一律先問。
@@ -1134,7 +1134,7 @@ cmp "$LV/makefile" "$MAC/Packages/vChewing_OSNeutral_LibVanguard/makefile"
 >
 > **本輪實鋪的是「六份」而非 §3.1 原表單的「三份」**：除 `Package@swift-5.10.swift` 與 6.0／6.1 兩份封堵檔外，**另鋪 `Package@swift-6.2.swift`／`Package@swift-6.3.swift` 兩份封堵檔**（隨「Swift 6.x 僅支援 6.4+」之裁定；見 §3.1 末段〈未來擴充〉與 §十四 N3），並把該 18 包的 `Package.swift` 宣告值**一併由 6.2 抬到 6.4**——不抬則 6.4 toolchain 會被 6.3 封堵檔攔下（即 N3 之「方案 B」）。**兩側實測**：6.3.3 toolchain 建置該 18 包任一 → 封堵檔生效（`error: … 不支援 Swift 6.2 / 6.3 toolchain`）；6.4 toolchain → 取 `Package.swift`、rc=0；5.10 toolchain 之 `dump-package` → `platforms` 為空（`nil`）、產品型別為 `static`。
 >
-> **6.2／6.4 側複驗（本輪）**：倉根 `swift build` **rc=0**（Build complete，54.80s）——涵蓋全部 19 個 subpackage。`swift test --no-parallel` 抽驗：**聚合體 rc=0、9 個測試靶共 535 項全綠**；`vChewing_Hotenka` 8 項、`vChewing_OtherIMEDataReader` 6 項、`vChewing_OSFrameworkImpl` 3 項皆綠；`Jad_BookmarkManager` 之測試靶為**既存連結失敗**（見該列備註，已實測非本輪所致）。逐列結果見下表「6.2 側不退化」欄。
+> **6.2／6.4 側複驗（本輪）**：倉根 `swift build` **rc=0**（Build complete，54.80s）——涵蓋全部 19 個 subpackage。`swift test --no-parallel` 抽驗：**聚合體 rc=0、9 個測試目標共 535 項全綠**；`vChewing_Hotenka` 8 項、`vChewing_OtherIMEDataReader` 6 項、`vChewing_OSFrameworkImpl` 3 項皆綠；`Jad_BookmarkManager` 之測試目標為**既存連結失敗**（見該列備註，已實測非本輪所致）。逐列結果見下表「6.2 側不退化」欄。
 
 > **① 已完成（2026-09-15，任務 B）**：由 ⓪ 的 **6 處診斷（4 檔）** 入手，逐包重跑 `make build510-all` 追蹤消長，最終 **16 包 rc=0、3 包 rc≠0**（`make` 仍回 rc=2 係因末三包未收）。**6 處的處置全數落在既有的三種格**：§5.1(b)（標頭 `nonisolated` 下放至成員）1 處、§5.1(c)（`#if compiler(>=6.2)` 兩分支、<6.2 採 legacy 寫法）3 處、§5.5 第 2 條（`if #unavailable() {} else {}` 兩分支）2 處。
 >
@@ -1149,25 +1149,25 @@ cmp "$LV/makefile" "$MAC/Packages/vChewing_OSNeutral_LibVanguard/makefile"
 >
 > **未收者恰為 §9.3 的第 16～18 位**：16 `CandidateWindow`、17 `SettingsUI` 屬 **② 收斂段**；18 `MainAssembly4Darwin` 為**待事主裁定**之項。**① 段（第 1～15 位）自此全綠**——含規則 2 的第一支終點產物 `libInstallerAssembly4Darwin.a`（產物經 `file`／`vtool` 驗為 static `ar` archive、`vtool` 以 `not mach-o` 拒收）。
 >
-> **6.2／6.4 側複驗（① 完成時）**：倉根 `swift build` **rc=0**；聚合體 `swift test --no-parallel` **rc=0、9 個測試靶共 535 項、0 失敗**（與 ⓪ 之 535 項**一致，項數不減**）。
+> **6.2／6.4 側複驗（① 完成時）**：倉根 `swift build` **rc=0**；聚合體 `swift test --no-parallel` **rc=0、9 個測試目標共 535 項、0 失敗**（與 ⓪ 之 535 項**一致，項數不減**）。
 >
-> **② 收斂段之前段已完成（2026-09-15，任務 B 之 ②）**：§9.3 第 **16～17** 位收掉——`vChewing_CandidateWindow`、`vChewing_SettingsUI` 皆達 `make build510` **rc=0、0 error**（產物 `libCandidateWindow.a`／`libSettingsUI.a`，經 `file` 驗為 `current ar archive`）。修後重跑 `make build510-all` 之 rc 分佈：**19 個目錄中 18 個 ✓**（含聚合體），**唯一失敗者即第 18 位 `vChewing_MainAssembly4Darwin`**（`rc=2`，失敗於依賴圖層：遠端 lexicon 兩支 build plugin 產品之 `CSQLite3` 靶，`contains unsafe build flags`——**與本輪無關、依工單未動**）。即 **18 個擊破項中 17 項 rc=0，② 段自此只剩終點 `MainAssembly4Darwin`**。
+> **② 收斂段之前段已完成（2026-09-15，任務 B 之 ②）**：§9.3 第 **16～17** 位收掉——`vChewing_CandidateWindow`、`vChewing_SettingsUI` 皆達 `make build510` **rc=0、0 error**（產物 `libCandidateWindow.a`／`libSettingsUI.a`，經 `file` 驗為 `current ar archive`）。修後重跑 `make build510-all` 之 rc 分佈：**19 個目錄中 18 個 ✓**（含聚合體），**唯一失敗者即第 18 位 `vChewing_MainAssembly4Darwin`**（`rc=2`，失敗於依賴圖層：遠端 lexicon 兩支 build plugin 產品之 `CSQLite3` 目標，`contains unsafe build flags`——**與本輪無關、依工單未動**）。即 **18 個擊破項中 17 項 rc=0，② 段自此只剩終點 `MainAssembly4Darwin`**。
 >
-> **本輪手法全數落在既有格內**（未新增任何手法）：`#Preview` 逐處圈隔（本輪 15 處：`SettingsUI` 13＋`CandidateWindow` 2；全倉 17 處至此僅餘非出貨靶 `vChewingDebuggable` 1 處未圈——依 Q01 不需圈）與 SwiftUI 之整檔／整段圈隔（§5.1(f)＋鐵律五：`SettingsUI` 17 檔整檔、`CandidateWindow` 2 段）；`if #unavailable() {} else {}` 完整兩分支（§5.5 第 2 條：`performDrag(with:)` 1 處、`localizedStandardContains` 1 處，後者 10.10 分支採 legacy 同款 `range(of:options:)`，§5.1(g)）；`nonisolated deinit` → 樸素 `deinit`（§6.3：`CtlSettingsUI`／`CtlSettingsCocoa` 各 1 處）；`#if DEBUG` 之內再加一層 `#if compiler(>=6.2)`（§5.4 之（五）第 2 點：`CandidateWindow` 兩個 preview 檔，既有守衛未動）。**未新增任何 `@MainActor`**（鐵律一）；**未動 manifest／CI／`.swiftformat`／`.swiftlint.yml`／`Deps/`／倉根 `Sources/`**；16 個已就位包的原始碼一字未動（交差前的 `make lintFormatUncommitted` 對全樹之淨變動為**零**，見下行）。
+> **本輪手法全數落在既有格內**（未新增任何手法）：`#Preview` 逐處圈隔（本輪 15 處：`SettingsUI` 13＋`CandidateWindow` 2；全倉 17 處至此僅餘非出貨目標 `vChewingDebuggable` 1 處未圈——依 Q01 不需圈）與 SwiftUI 之整檔／整段圈隔（§5.1(f)＋鐵律五：`SettingsUI` 17 檔整檔、`CandidateWindow` 2 段）；`if #unavailable() {} else {}` 完整兩分支（§5.5 第 2 條：`performDrag(with:)` 1 處、`localizedStandardContains` 1 處，後者 10.10 分支採 legacy 同款 `range(of:options:)`，§5.1(g)）；`nonisolated deinit` → 樸素 `deinit`（§6.3：`CtlSettingsUI`／`CtlSettingsCocoa` 各 1 處）；`#if DEBUG` 之內再加一層 `#if compiler(>=6.2)`（§5.4 之（五）第 2 點：`CandidateWindow` 兩個 preview 檔，既有守衛未動）。**未新增任何 `@MainActor`**（鐵律一）；**未動 manifest／CI／`.swiftformat`／`.swiftlint.yml`／`Deps/`／倉根 `Sources/`**；16 個已就位包的原始碼一字未動（交差前的 `make lintFormatUncommitted` 對全樹之淨變動為**零**，見下行）。
 >
-> **6.2／6.4 側複驗（② 完成時）**：倉根 `swift build` **rc=0**（Swift 6.4）；聚合體 `swift test --no-parallel` **rc=0、9 個測試靶共 535 項、0 失敗**（與 ① 之 535 項**一致，項數不減**）；兩包自身 6.4 側 `swift test` 皆 **rc=0**（`CandidateWindow` 20 項、`SettingsUI` 1 項）。**交差前 `make lintFormatUncommitted`**：淨結果與執行前**逐位元組相同**（`git diff HEAD | shasum` 兩次同值），即 SwiftLint 的 `void_return`／`trailing_comma` 修正全數由 SwiftFormat 斧正回原狀（§八 第 3、6 條）。
+> **6.2／6.4 側複驗（② 完成時）**：倉根 `swift build` **rc=0**（Swift 6.4）；聚合體 `swift test --no-parallel` **rc=0、9 個測試目標共 535 項、0 失敗**（與 ① 之 535 項**一致，項數不減**）；兩包自身 6.4 側 `swift test` 皆 **rc=0**（`CandidateWindow` 20 項、`SettingsUI` 1 項）。**交差前 `make lintFormatUncommitted`**：淨結果與執行前**逐位元組相同**（`git diff HEAD | shasum` 兩次同值），即 SwiftLint 的 `void_return`／`trailing_comma` 修正全數由 SwiftFormat 斧正回原狀（§八 第 3、6 條）。
 
 | 位次 | 目錄名（＝ identity） | 版本 manifest<br>（`Package.swift`@6.4 ＋ 5.10／6.0／6.1／6.2／6.3，共六份） | `makefile` | 首輪 `make build510` rc | 目前 rc | 6.2 側不退化 | 備註 |
 |---|---|---|---|---|---|---|---|
-| 1 | `HangarRash_SwiftyCapsLockToggler` | **已就位**（六份） | **已就位**（`build510`／`clean510`） | **rc=0** | **rc=0** | ✅（根 `swift build` 涵蓋） | 帶 C 靶（`CapsLockToggler` 原樣保留）；**首支探針**（§9.6）——**只鋪 manifest 即通** |
-| 2 | `Jad_BookmarkManager` | **已就位**（六份） | **已就位** | rc=2 | **rc=0**（① 已收） | ⚠️ 見備註（**既存**、非本輪所致） | 首輪診斷：`Sources/BookmarkManager/BookmarkManager.swift:308`（`nonisolated extension`）——**已依 §5.1(b) 下放至成員**（該 extension 的 4 個 `static func` 各標 `nonisolated`；extension 標頭之 `nonisolated` 撤除）。**6.4 側 `swift test` 之測試靶連結失敗為既存問題**（**不修、僅列報**）：`Undefined symbols … SwiftExtension.mainSync`（測試靶只宣告 `Vanguard` 產品、未宣告 `VanguardSwiftExtension`）；**已實測 HEAD 之 6.2 manifest 亦然**（rc=1、同符號），故非 manifest 鋪設所致；CI 對 rc=1 另有「視為無測試而略過」之分支，故未顯影 |
+| 1 | `HangarRash_SwiftyCapsLockToggler` | **已就位**（六份） | **已就位**（`build510`／`clean510`） | **rc=0** | **rc=0** | ✅（根 `swift build` 涵蓋） | 帶 C 目標（`CapsLockToggler` 原樣保留）；**首支探針**（§9.6）——**只鋪 manifest 即通** |
+| 2 | `Jad_BookmarkManager` | **已就位**（六份） | **已就位** | rc=2 | **rc=0**（① 已收） | ⚠️ 見備註（**既存**、非本輪所致） | 首輪診斷：`Sources/BookmarkManager/BookmarkManager.swift:308`（`nonisolated extension`）——**已依 §5.1(b) 下放至成員**（該 extension 的 4 個 `static func` 各標 `nonisolated`；extension 標頭之 `nonisolated` 撤除）。**6.4 側 `swift test` 之測試目標連結失敗為既存問題**（**不修、僅列報**）：`Undefined symbols … SwiftExtension.mainSync`（測試目標只宣告 `Vanguard` 產品、未宣告 `VanguardSwiftExtension`）；**已實測 HEAD 之 6.2 manifest 亦然**（rc=1、同符號），故非 manifest 鋪設所致；CI 對 rc=1 另有「視為無測試而略過」之分支，故未顯影 |
 | 3 | `vChewing_FolderMonitor` | **已就位**（六份） | **已就位** | **rc=0** | **rc=0** | ✅（根 `swift build` 涵蓋） | **只鋪 manifest 即通** |
 | 4 | `vChewing_Hotenka` | **已就位**（六份） | **已就位**（**既存 `format`／`lint` 保留未動**，其 `.PHONY` 擴充後追加 5.10 段） | **rc=0** | **rc=0** | ✅（根 `swift test` 亦綠） | **只鋪 manifest 即通** |
-| 5 | `vChewing_IMKUtils` | **已就位**（六份） | **已就位** | **rc=0** | **rc=0** | ✅（根 `swift build` 涵蓋） | 帶 C 靶（`IMKSwiftModernHeaders` 原樣保留）；**只鋪 manifest 即通** |
+| 5 | `vChewing_IMKUtils` | **已就位**（六份） | **已就位** | **rc=0** | **rc=0** | ✅（根 `swift build` 涵蓋） | 帶 C 目標（`IMKSwiftModernHeaders` 原樣保留）；**只鋪 manifest 即通** |
 | 6 | `vChewing_ModifierKeyHitChecker` | **已就位**（六份） | **已就位** | **rc=0** | **rc=0** | ✅（根 `swift build` 涵蓋） | **只鋪 manifest 即通** |
 | 7 | `vChewing_OtherIMEDataReader` | **已就位**（六份） | **已就位** | **rc=0** | **rc=0** | ✅（根 `swift test` 亦綠） | **只鋪 manifest 即通**（此包 6.2 側本即無 `platforms`，5.10 manifest 明列 `nil`） |
 | 8 | `vChewing_UpdateSputnik` | **已就位**（六份） | **已就位** | **rc=0** | **rc=0** | ✅（根 `swift build` 涵蓋） | **只鋪 manifest 即通** |
-| 9 | `vChewing_OSFrameworkImpl` | **已就位**（六份） | **已就位** | rc=2 | **rc=0**（① 已收，0 error／0 warning） | ✅（根 `swift test` 亦綠） | 帶 ObjC 靶（`OSFrameworkImplViaObjC` 原樣保留）；**深度 1 檢查點**（§9.6）。首輪六處診斷有**四處落在本包**，**已全數收掉**：`AppKitImpl_Misc.swift:119`（`enum MeasurementPath`）／`:121`（`struct CacheKey`）與 `SecureEventInputSputnik.swift:110`（`struct ActivationFlags`）皆 `nonisolated` 掛巢狀型別 → 依 §5.1(c) 以 `#if compiler(>=6.2)` 整段分隔、<6.2 分支採 legacy 寫法（Misc 兩者共用同一組 member，僅兩個型別宣告各寫一份）；`AppKitImpl_NSView.swift:538`／`:547` 為 availability（`archivedData(withRootObject:requiringSecureCoding:)`／`unarchivedObject(ofClass:from:)` 需 macOS 10.13）→ 依 §5.5 第 2 條以 `if #unavailable(macOS 10.13) {} else {}` 兩分支寫法，<10.13 分支用舊名（`archivedData(withRootObject:)`／`unarchiveObject(with:)`，即 legacy 對位寫法）。**註**：`SecureEventInputSputnik.swift:110` **不在 §5.4 普查所列的 2 處之內**（該普查之正則要求 `nonisolated` 緊接 `extension\|class\|struct\|enum\|actor`，被 `public` 隔開者漏收）——屬**新增實測發現**，已回報事主，並已於 §5.4 補記 |
+| 9 | `vChewing_OSFrameworkImpl` | **已就位**（六份） | **已就位** | rc=2 | **rc=0**（① 已收，0 error／0 warning） | ✅（根 `swift test` 亦綠） | 帶 ObjC 目標（`OSFrameworkImplViaObjC` 原樣保留）；**深度 1 檢查點**（§9.6）。首輪六處診斷有**四處落在本包**，**已全數收掉**：`AppKitImpl_Misc.swift:119`（`enum MeasurementPath`）／`:121`（`struct CacheKey`）與 `SecureEventInputSputnik.swift:110`（`struct ActivationFlags`）皆 `nonisolated` 掛巢狀型別 → 依 §5.1(c) 以 `#if compiler(>=6.2)` 整段分隔、<6.2 分支採 legacy 寫法（Misc 兩者共用同一組 member，僅兩個型別宣告各寫一份）；`AppKitImpl_NSView.swift:538`／`:547` 為 availability（`archivedData(withRootObject:requiringSecureCoding:)`／`unarchivedObject(ofClass:from:)` 需 macOS 10.13）→ 依 §5.5 第 2 條以 `if #unavailable(macOS 10.13) {} else {}` 兩分支寫法，<10.13 分支用舊名（`archivedData(withRootObject:)`／`unarchiveObject(with:)`，即 legacy 對位寫法）。**註**：`SecureEventInputSputnik.swift:110` **不在 §5.4 普查所列的 2 處之內**（該普查之正則要求 `nonisolated` 緊接 `extension\|class\|struct\|enum\|actor`，被 `public` 隔開者漏收）——屬**新增實測發現**，已回報事主，並已於 §5.4 補記 |
 | 10 | `vChewing_Shared_DarwinImpl` | **已就位**（六份） | **已就位** | rc=2 | **rc=0**（① 已收） | ✅（根 `swift build` 涵蓋） | 四支下游（13～16）。首輪診斷在**上游**（`OSFrameworkImpl/…/AppKitImpl_NSView.swift:538`），上游修好後**顯出自身兩檔**並已收掉：`PEReloadEventObserver.swift`（`@Observable`／`ObservationIgnored`，§5.1(f) 圈進 `#if compiler(>=6.2)`）與 `UserDefImpl/UserDefRenderable.swift`（SwiftUI 專屬、legacy 無對位物，同法圈隔）。**連帶**：13～16 位之下游即隨之轉綠；`SettingsUI` 之 `PerEditor` 端仍引用前者，屬 ② 段圈隔範圍（見第 17 列） |
 | 11 | `vChewing_Uninstaller` | **已就位**（六份） | **已就位** | rc=2 | **rc=0**（① 已收） | ✅（根 `swift build` 涵蓋） | 首輪診斷在**上游**（`OSFrameworkImpl/…/AppKitImpl_Misc.swift:119`）；上游收掉即綠，本包原始碼未動 |
 | **12** | **`vChewing_InstallerAssembly4Darwin`** | **已就位**（六份） | **已就位** | rc=2 | **rc=0**（① 已收；**產出 `libInstallerAssembly4Darwin.a`**） | ✅（根 `swift build` 涵蓋） | **← 事主裁定「可早收」，自原第 17 位前移**；**收掉此包即達成規則 2 的第一支終點產物**（§9.5）。上游收掉後顯出自身四處，已全數收掉：`SwiftUI/` 兩檔（`InstallerApp4SwiftUI`／`VwrAppInstaller4SwiftUI`）依 §5.1(f) 整檔圈進 `#if compiler(>=6.2)`；`VwrAppInstaller4Cocoa.swift:645` 之 `#Preview` 依同一規則圈隔（`@available(macOS 14.0, *)` 擋不住巨集展開）；`MainSputnik4Installer.swift:18` 之 `asyncInit()` 標 `@available(macOS 10.15, *)`（concurrency 執行期下限，§5.5 第 1 條），其 `runNSApp` 內的 SwiftUI 分支一併圈隔（5.10 側一律走 AppKit 版，與 legacy 安裝程式一致）；另補 `InstallerShared.swift` 之 `import IMKUtils`（顯式依賴，依 §7.2「出現找不到符號才補」之例） |
@@ -1176,7 +1176,7 @@ cmp "$LV/makefile" "$MAC/Packages/vChewing_OSNeutral_LibVanguard/makefile"
 | 15 | `vChewing_TooltipUI` | **已就位**（六份） | **已就位** | rc=2 | **rc=0**（① 已收） | ✅（根 `swift build` 涵蓋） | 首輪診斷在**上游**（`OSFrameworkImpl/…/AppKitImpl_Misc.swift:119`）；上游收掉後顯出自身一處：`TooltipUI.swift:179` 之 `hide()`（同第 13 列之病與藥：MainActor 成員 `setColor(state:)`） |
 | 16 | `vChewing_CandidateWindow` | **已就位**（六份） | **已就位** | rc=2 | **rc=0**（② 已收；**產出 `libCandidateWindow.a`**） | ✅（根 `swift build` 涵蓋；本包 6.4 側 `swift test` **rc=0、20 項**） | **② 收斂段起點**；`#Preview` 2 處。首輪兩條診斷已收：`TDK4AppKit/_GSI4AppKit_Previews.swift`／`_TDK4AppKit_Previews.swift` 之 `no macro named 'Preview'` → 依 §5.4 之（五）第 2 點**在既有 `#if DEBUG` 之內再加一層 `#if compiler(>=6.2)`**（既有守衛一字未動，preview 整段含其內宣告一併包住）；`VwrCandidateGSI4AppKit.swift:563` 之 `performDrag(with:)`（需 macOS 10.11）→ 依 §5.5 第 2 條**完整兩分支**（`if #unavailable(macOS 10.11) {} else {}`；10.10 分支留空、不另立替代實作，`vChewing-OSX-Legacy` 於該處為單分支 `#available` 寫法）。**另依 §5.1(f)／鐵律五補圈兩處**：`VwrCandidateGSI4AppKit.swift`／`VwrCandidateTDK4AppKit.swift` 檔尾〈Debug Module Using Swift UI〉段（`import SwiftUI` ＋ `NSViewRepresentable` 包裝；其唯一引用者即前述兩個 preview 檔），**同檔其餘 AppKit 內容一字未動** |
 | 17 | `vChewing_SettingsUI` | **已就位**（六份） | **已就位** | rc=2 | **rc=0**（② 已收；**產出 `libSettingsUI.a`**） | ✅（根 `swift build` 涵蓋；本包 6.4 側 `swift test` **rc=0、1 項**） | **② 收斂段**；SwiftUI 18 檔／`#Preview` 13 處／`@Observable`＋`@Bindable`／`nonisolated deinit` 2 處。**收法**：17 個純 SwiftUI 檔（`SettingsUI/` 全 15 檔＋`PhraseEditor/PhraseEditorUI.swift`＋`SettingsCocoa/PrefUITabs.swift` 之 `suiView` 乙員以外者另計）**整檔**圈進 `#if compiler(>=6.2)`（§5.1(f)＋鐵律五）；`PhraseEditorUI.swift:218` 之 `PEReloadEventObserver` 引用（第 10 位圈隔之連帶）**隨該檔整檔圈隔而解，未在 SettingsUI 側硬造符號**；`SettingsCocoa/PrefUITabs.swift` 僅圈 `suiView`（回傳 `some View` 且逐一引用 6.2+ 面板），其餘成員（`cocoaTag`／`i18nTitle`／`icon`）為 AppKit 側所用、兩代皆須可編；`SettingsCocoa/` 13 檔之 `#Preview` 逐處圈隔；`CtlSettingsCocoa.swift` 之 `nonisolated deinit`（:43）改樸素 `deinit`（§6.3；不觸及 MainActor 狀態故免 `mainSync`），同檔 `localizedStandardContains`（:255，需 macOS 10.11）依 §5.5 第 2 條寫完整兩分支、10.10 分支採 legacy 同款 `range(of:options:)`（§5.1(g)）。**5.10 側所留者**＝`SettingsCocoa` 整組 AppKit 設定介面（與 legacy 倉庫之 SettingsCocoa 對位）＋`SettingsUIHost`／`PhraseEditorDelegate`／`_ModuleReexport`；SwiftUI 側之型別（`CtlSettingsUI`／`VwrSettingsUI`／`SettingsUIViewModel`／各 `VwrSettingsPane*`／`VwrPhraseEditorUI`）於 5.10 側不存在（§5.1(f)：<6.2 不提供替代實作），其下游連帶落於第 18 位 |
-| 18 | `vChewing_MainAssembly4Darwin` | **已就位**（六份） | **已就位** | rc=2 | **rc≠0**（2026-09-16 事主指示「改回與 `Package.swift` 同構」後復發，失敗於依賴圖層；此前的 rc=0 與 `libMainAssembly4Darwin.a`（26 MB）係以「5.10 側不收該依賴」為前提者） | ✅（根 `swift build` rc=0；根 manifest 無 test target，本包之測試靶屬 `MainAssembly4DarwinTests`，見 §13.4 之盤點） | **終點**。**依賴圖層：5.10 側之取捨歷經一次翻轉（現行狀態＝收該依賴，故本包 5.10 側不可建置）**。（i）2026-09-15 二輪複驗確認：該兩支 plugin 產品各含 `CSQLite3` 靶，而該靶帶 `.unsafeFlags(["-w"])`，**5.10 SwiftPM 對非根套件的 unsafe flags 一律硬拒**；`--disable-sandbox` 無效、乾淨解析仍復現、亦無允許之開關——故非沙箱假象；當時的處置是「5.10 manifest 不收該依賴與兩支 plugin」，本包遂達 rc=0。（ii）**2026-09-16 事主指示改回**：該 manifest 現與 `Package.swift` 同構（遠端依賴 ＋ 兩支 plugin 原樣保留），**本包在 5.10 側因此回到 rc≠0**（再次止於 `contains unsafe build flags`）。**兩條替代路均已實測**：(a) `--disable-sandbox` 無效；(b) 改 `.package(path:)` 指向本地 lexicon 檢出者可過該關卡（SwiftPM 對本地路徑相依免檢），但隨即撞上平台下限衝突——plugin 產品要求 macOS 10.15，而本側 `platforms` 為 `nil`（取其地板 10.13）。**故唯一的正解在 lexicon 倉自身**：移除該 `.unsafeFlags(["-w"])`（並使其 plugin 產品的平台宣告不低於本側）後出新版；已登記為 §十四 **N4**。6.4 側不受影響（新世代 SwiftPM 允准 plugin 靶的 unsafe flags；根 `swift build` 實測 rc=0）。**原始碼層診斷 10 條、涉 6 檔，已全數收掉**：`UserPhraseImpl.swift:11` 之標頭 `nonisolated extension` → §5.1(b) 下放至 6 個成員；`MainSputnik.swift:12` 之 `wireUp()` 兩個非隔離呼叫 → 於 init 內套 `mainSync {}`（§6.2，非 `{ @MainActor in }`）；同檔 `asyncInit()` → `@available(macOS 10.15, *)`（與 `MainSputnik4Installer` 同款）；`IMEMenuSputnik.swift:87` 與 `InputSession_DarwinSurface.swift:106` 之 `CtlSettingsUI` 引用 → 依 §5.1(f)／鐵律五以 `#if compiler(>=6.2)` 圈隔，5.10 側一律走 `CtlSettingsCocoa`（與 `vChewing-OSX-Legacy` 的同名實作一致）；`LXMgr_Core.swift:99`／`:450` 之 MainActor 呼叫 → 依 legacy 形狀改走 `DispatchQueue.main.async { @MainActor in … }`（5.10 側 `mainSync` 之閉包不帶隔離，故不可用）；`SettingsUI/SettingsUIHost.swift` 之顯式 `@MainActor` → **撤除**（legacy 同名檔本即無此標註；6.2 側改由 `defaultIsolation` 提供同一隔離，語義不變。**必要性已實測**：復原該標註即令 `MainSputnik.swift:20` 報 `call to main actor-isolated static method 'wireUp()'`） |
+| 18 | `vChewing_MainAssembly4Darwin` | **已就位**（六份） | **已就位** | rc=2 | **rc≠0**（2026-09-16 事主指示「改回與 `Package.swift` 同構」後復發，失敗於依賴圖層；此前的 rc=0 與 `libMainAssembly4Darwin.a`（26 MB）係以「5.10 側不收該依賴」為前提者） | ✅（根 `swift build` rc=0；根 manifest 無 test target，本包之測試目標屬 `MainAssembly4DarwinTests`，見 §13.4 之盤點） | **終點**。**依賴圖層：5.10 側之取捨歷經一次翻轉（現行狀態＝收該依賴，故本包 5.10 側不可建置）**。（i）2026-09-15 二輪複驗確認：該兩支 plugin 產品各含 `CSQLite3` 目標，而該目標帶 `.unsafeFlags(["-w"])`，**5.10 SwiftPM 對非根套件的 unsafe flags 一律硬拒**；`--disable-sandbox` 無效、乾淨解析仍復現、亦無允許之開關——故非沙箱假象；當時的處置是「5.10 manifest 不收該依賴與兩支 plugin」，本包遂達 rc=0。（ii）**2026-09-16 事主指示改回**：該 manifest 現與 `Package.swift` 同構（遠端依賴 ＋ 兩支 plugin 原樣保留），**本包在 5.10 側因此回到 rc≠0**（再次止於 `contains unsafe build flags`）。**兩條替代路均已實測**：(a) `--disable-sandbox` 無效；(b) 改 `.package(path:)` 指向本地 lexicon 檢出者可過該關卡（SwiftPM 對本地路徑相依免檢），但隨即撞上平台下限衝突——plugin 產品要求 macOS 10.15，而本側 `platforms` 為 `nil`（取其地板 10.13）。**故唯一的正解在 lexicon 倉自身**：移除該 `.unsafeFlags(["-w"])`（並使其 plugin 產品的平台宣告不低於本側）後出新版；已登記為 §十四 **N4**。6.4 側不受影響（新世代 SwiftPM 允准 plugin 目標的 unsafe flags；根 `swift build` 實測 rc=0）。**原始碼層診斷 10 條、涉 6 檔，已全數收掉**：`UserPhraseImpl.swift:11` 之標頭 `nonisolated extension` → §5.1(b) 下放至 6 個成員；`MainSputnik.swift:12` 之 `wireUp()` 兩個非隔離呼叫 → 於 init 內套 `mainSync {}`（§6.2，非 `{ @MainActor in }`）；同檔 `asyncInit()` → `@available(macOS 10.15, *)`（與 `MainSputnik4Installer` 同款）；`IMEMenuSputnik.swift:87` 與 `InputSession_DarwinSurface.swift:106` 之 `CtlSettingsUI` 引用 → 依 §5.1(f)／鐵律五以 `#if compiler(>=6.2)` 圈隔，5.10 側一律走 `CtlSettingsCocoa`（與 `vChewing-OSX-Legacy` 的同名實作一致）；`LXMgr_Core.swift:99`／`:450` 之 MainActor 呼叫 → 依 legacy 形狀改走 `DispatchQueue.main.async { @MainActor in … }`（5.10 側 `mainSync` 之閉包不帶隔離，故不可用）；`SettingsUI/SettingsUIHost.swift` 之顯式 `@MainActor` → **撤除**（legacy 同名檔本即無此標註；6.2 側改由 `defaultIsolation` 提供同一隔離，語義不變。**必要性已實測**：復原該標註即令 `MainSputnik.swift:20` 報 `call to main actor-isolated static method 'wireUp()'`） |
 
 > **本列之「目前 rc」已由 P218 接管（2026-09-16）**：P218 起該包之 5.10 manifest 不再收 lexicon 依賴與兩支 plugin，`make build510-all` 復歸 19／19 rc=0；機理（lexicon 真正用上 Swift Concurrency，其 10.15 下限與本側 10.13 地板相衝）見 P218 之紀錄。
 
@@ -1184,7 +1184,7 @@ cmp "$LV/makefile" "$MAC/Packages/vChewing_OSNeutral_LibVanguard/makefile"
 
 | 目錄／子套件 | 六份版本 manifest | `makefile` | 首輪 rc | 目前 rc | 說明 |
 |---|---|---|---|---|---|
-| `vChewing_OSNeutral_LibVanguard`（聚合體，深度 0） | **已就位**（六份，P216 ＋ 任務 A） | **已就位**（122 行；與 `vChewing-LibVanguard/makefile` 逐位元組相同——已明文納入 I2，見 §11.2） | **rc=0**（P216 已達；本輪 `build510-all` 複驗亦 rc=0） | **rc=0** | **本規範之參考實作**；6.2 側基線記為 529 項——本輪 6.4 側 `swift test --no-parallel` 複驗：**9 個測試靶、535 項全綠（rc=0）** |
+| `vChewing_OSNeutral_LibVanguard`（聚合體，深度 0） | **已就位**（六份，P216 ＋ 任務 A） | **已就位**（122 行；與 `vChewing-LibVanguard/makefile` 逐位元組相同——已明文納入 I2，見 §11.2） | **rc=0**（P216 已達；本輪 `build510-all` 複驗亦 rc=0） | **rc=0** | **本規範之參考實作**；6.2 側基線記為 529 項——本輪 6.4 側 `swift test --no-parallel` 複驗：**9 個測試目標、535 項全綠（rc=0）** |
 | `Deps/VanguardSwiftExtension`（巢狀子套件，深度 0） | **已就位**（六份） | **已就位**（`build510SwiftExtension` 於聚合體 `makefile` 內） | **rc=0**（P216 已達） | **rc=0** | 已定讞，§5.3 鐵則四禁動（本輪未動；兩倉 `cmp` 逐位元組相同） |
 
 **不列於 §13.1 的理由**：兩者皆是 P216 的成果、即本規範的**基線與參考實作**，不列為擊破標的（§9.3 末段）。數目核對：**§13.1 的 18 項 ＋ §13.2 的聚合體 1 個 ＝ 19 個目錄**，吻合。
@@ -1208,7 +1208,7 @@ error: 'vchewing_mainassembly4darwin': the target 'CSQLite3' in product 'TextTem
 error: 'vchewing_mainassembly4darwin': the target 'CSQLite3' in product 'VanguardTextMapPlugin' contains unsafe build flags
 ```
 
-**確係 SwiftPM 對 `CSQLite3` 之 `unsafeFlags(["-w"])` 的實質拒絕**：該靶屬遠端 `vChewing-VanguardLexicon`，而兩支 plugin 產品皆含它，5.10 SwiftPM 對**非根套件**的 unsafe flags 一律硬拒。三條獨立實測：① `--disable-sandbox` **無效**；② 清空 `.build/.legacy` 後之**乾淨解析**（強制重新 fetch ＋ 重新計算版本）**仍復現**同樣兩行；③ `swift build --help` 實查——5.10 **沒有**任何「允許依賴 unsafe flags」的開關。**處置**：5.10 manifest **不收**該遠端依賴與兩支 plugin（依 §5.1(g)「legacy 為現成答案」之原則自決；**已隨 P217 收工入庫**——事主如不認可此取捨，改回該依賴即令本包 5.10 側不可建置）——本側是**可建置性**驗證、產物為不帶資源的靜態 `.a`；而真正要出 macOS 10.9 app 的 legacy 倉庫本即自帶 `DictionaryData/`、不經此二 plugin 取得辭典，`Sources/` 亦不 import 該套件任何模組（實查 import 全集：SwiftExtension／AppKit／Foundation／Carbon／Darwin／IMKUtils／LibVanguard／ResourceLocator／UniformTypeIdentifiers／Shared／Shared_DarwinImpl）。**6.4 側不受影響**：新世代 SwiftPM 允准 plugin 靶的 unsafe flags，`Package.swift` 原樣保留該依賴與兩支 plugin（根 `swift build` 實測 rc=0）。**§十二 R7 之 (b) 至此結清為「5.10 側不可收」**；其 (ii)（`Package.resolved` v3 ＋ `originHash` 之相容性）因該依賴自 5.10 側退場而**自動無關**。
+**確係 SwiftPM 對 `CSQLite3` 之 `unsafeFlags(["-w"])` 的實質拒絕**：該目標屬遠端 `vChewing-VanguardLexicon`，而兩支 plugin 產品皆含它，5.10 SwiftPM 對**非根套件**的 unsafe flags 一律硬拒。三條獨立實測：① `--disable-sandbox` **無效**；② 清空 `.build/.legacy` 後之**乾淨解析**（強制重新 fetch ＋ 重新計算版本）**仍復現**同樣兩行；③ `swift build --help` 實查——5.10 **沒有**任何「允許依賴 unsafe flags」的開關。**處置**：5.10 manifest **不收**該遠端依賴與兩支 plugin（依 §5.1(g)「legacy 為現成答案」之原則自決；**已隨 P217 收工入庫**——事主如不認可此取捨，改回該依賴即令本包 5.10 側不可建置）——本側是**可建置性**驗證、產物為不帶資源的靜態 `.a`；而真正要出 macOS 10.9 app 的 legacy 倉庫本即自帶 `DictionaryData/`、不經此二 plugin 取得辭典，`Sources/` 亦不 import 該套件任何模組（實查 import 全集：SwiftExtension／AppKit／Foundation／Carbon／Darwin／IMKUtils／LibVanguard／ResourceLocator／UniformTypeIdentifiers／Shared／Shared_DarwinImpl）。**6.4 側不受影響**：新世代 SwiftPM 允准 plugin 目標的 unsafe flags，`Package.swift` 原樣保留該依賴與兩支 plugin（根 `swift build` 實測 rc=0）。**§十二 R7 之 (b) 至此結清為「5.10 側不可收」**；其 (ii)（`Package.resolved` v3 ＋ `originHash` 之相容性）因該依賴自 5.10 側退場而**自動無關**。
 
 **二、第 18 位的原始碼層診斷共 10 條、涉 6 檔，處置如下**（全數落在既有格內，未新增 `@MainActor`、未動 `project.pbxproj`／CI／格式化設定）：
 
@@ -1231,11 +1231,11 @@ error: 'vchewing_mainassembly4darwin': the target 'CSQLite3' in product 'Vanguar
 | `make build510-all` 之 rc 分佈（**二輪複驗：直接以 `make build510-all` 跑，未加任何額外旗標**） | 19 目中 18 目 rc=0 | **19 目中 19 目 rc=0、0 error**（`_MainWorkspace/tmp/p217-verify-510.sh` 之 `--disable-sandbox` 變體亦同為 19／19）　**⚠️ 該 19／19 以「MainAssembly 之 5.10 manifest 不收 lexicon 依賴」為前提；2026-09-16 事主指示改回同構後，該包復歸 rc≠0（18／19）——見 §13.1 第 18 列與 §十四 N4** |
 | 規則 2 終點產物 | `libInstallerAssembly4Darwin.a`（3.2 MB） | **＋ `libMainAssembly4Darwin.a`（26 MB）**；兩者皆 `file` → `current ar archive`、`vtool` → `not mach-o`（靜態封存、不帶 load command） |
 | 6.4 側倉根 `swift build` | rc=0 | **rc=0**（Build complete 5.10 秒） |
-| 6.4 側聚合體 `swift test --no-parallel` | 535 項 0 失敗 | **535 項 0 失敗**（9 個測試靶，逐靶 18／37／7／6／203／193／61／3／7） |
+| 6.4 側聚合體 `swift test --no-parallel` | 535 項 0 失敗 | **535 項 0 失敗**（9 個測試目標，逐目標 18／37／7／6／203／193／61／3／7） |
 | I2 byte-sync | 全項 `cmp` 通過 | **全項 `cmp` 通過**（六份 manifest ×2 位置 ＋ 聚合體 `makefile` ＋ `Sources`／`Deps` `diff -rq` 零差異） |
 | `make lintFormatUncommitted` | **未跑** | **已跑**：SwiftLint ＋ SwiftFormat 連跑之**淨結果為零變動**（`git diff --shortstat` 於該管線前後皆為同一組數字——② 段當時 68 檔／+4028−3663、③ 段之後 74 檔／+4150−3716；兩輪皆零變動，即產物本即符合該管線格式，管線具冪等性） |
 
-> **✅ 一項既存測試不穩定——已修復（2026-09-15 深夜，`208554e LibVanguard // Patch unit test issues.`，16 檔、+490/−412）**：本節原先列報「聚合體 6.4 側 `swift test --no-parallel` 之 `test_IH400_MixedAlnumKanjiInputTest_Izanami(_:_:)` 間歇失敗（四次連跑之 issue 數 4／3／0／0）」——根因為**測試彼此踩踏行程內全域狀態**（`LXFacade.factoryTrie`／`lxCassette`、`PrefMgr.shared`、`SessionHost.shared`）＋該測試是全靶唯一「跑遍整張注音表卻未把 `asyncLoadingUserData` 壓成 `false`」者。**修法與驗收見 §十二 R23 之 (b)(c) 與 `Phase216_PostResearch.md` §十四**：`LibVanguardTests` 收進單一 `.serialized` 根 suite、該測試補上同步載入、`HomaTests` 之堆積哨兵改為多次取樣；**兩倉各以 `swift test --no-parallel` 連跑 5 次全綠（535 項、0 issue）**。**故本節上述「以兩次連跑皆綠為準」之臨時判準不再需要**；`--no-parallel` 與 `.serialized` 兩道防線仍**缺一不可**（理由見 R23 末段）。**與 P217 之 5.10 手術無關**之判斷不變（中招者位於聚合體、6.4 側）。
+> **✅ 一項既存測試不穩定——已修復（2026-09-15 深夜，`208554e LibVanguard // Patch unit test issues.`，16 檔、+490/−412）**：本節原先列報「聚合體 6.4 側 `swift test --no-parallel` 之 `test_IH400_MixedAlnumKanjiInputTest_Izanami(_:_:)` 間歇失敗（四次連跑之 issue 數 4／3／0／0）」——根因為**測試彼此踩踏行程內全域狀態**（`LXFacade.factoryTrie`／`lxCassette`、`PrefMgr.shared`、`SessionHost.shared`）＋該測試是全目標唯一「跑遍整張注音表卻未把 `asyncLoadingUserData` 壓成 `false`」者。**修法與驗收見 §十二 R23 之 (b)(c) 與 `Phase216_PostResearch.md` §十四**：`LibVanguardTests` 收進單一 `.serialized` 根 suite、該測試補上同步載入、`HomaTests` 之堆積哨兵改為多次取樣；**兩倉各以 `swift test --no-parallel` 連跑 5 次全綠（535 項、0 issue）**。**故本節上述「以兩次連跑皆綠為準」之臨時判準不再需要**；`--no-parallel` 與 `.serialized` 兩道防線仍**缺一不可**（理由見 R23 末段）。**與 P217 之 5.10 手術無關**之判斷不變（中招者位於聚合體、6.4 側）。
 
 **四、環境註記（下一輪務必先讀；此為工具層，非規範變更）**
 
@@ -1255,7 +1255,7 @@ error: 'vchewing_mainassembly4darwin': the target 'CSQLite3' in product 'Vanguar
 
 **封堵檔訊息措辭一致化（2026-09-16 已辦）**：全倉 **46 份**封堵檔（`Package@swift-6.2/6.3` × 23 個位置：兩倉之聚合體、兩者之 `Deps/VanguardSwiftExtension`、`vChewing-macOS` 之 18 個 subpackage 與倉根 meta-manifest）的 `#error` 訊息自此**同構**：第 1 行僅換上該處之 scope 名、第 2～4 行逐字相同，第 5 行只有「倉根 meta-manifest 無 5.10 對位」者省去 5.10 一語。**模板見 §十二 R22 末段**；實測（6.3.3 toolchain）：任一位置皆於 manifest 編譯期以新訊息攔下。**兩倉之鏡像配對仍逐位元組相同**（`cmp` 實查）。
 
-**`vChewing_MainAssembly4Darwin` 之 5.10 manifest 改回與 `Package.swift` 同構（2026-09-16，事主指示）**：該 manifest 現收遠端 lexicon 依賴（`exact: "4.7.4"`）與兩支 build plugin，與 `Package.swift` 對位；**代價是該包於 5.10 側復歸 rc≠0**（失敗於依賴圖層之 `contains unsafe build flags`），故全倉 `make build510-all` 之現值為 **18／19**（其餘 18 個目錄不受影響；6.4 側 `swift build` 實測 rc=0）。**正解在 lexicon 倉**：移除其 `CSQLite3` 靶的 `.unsafeFlags(["-w"])`（並使兩支 plugin 產品的平台宣告不低於本側之 `nil` 地板）後出新版——已登記為 §十四 **N4**。該 manifest 檔頭第 5 條已就地載明此事與兩條已實測之替代路（`--disable-sandbox` 無效；`.package(path:)` 可過 unsafe flags、但撞 10.15 平台下限）。
+**`vChewing_MainAssembly4Darwin` 之 5.10 manifest 改回與 `Package.swift` 同構（2026-09-16，事主指示）**：該 manifest 現收遠端 lexicon 依賴（`exact: "4.7.4"`）與兩支 build plugin，與 `Package.swift` 對位；**代價是該包於 5.10 側復歸 rc≠0**（失敗於依賴圖層之 `contains unsafe build flags`），故全倉 `make build510-all` 之現值為 **18／19**（其餘 18 個目錄不受影響；6.4 側 `swift build` 實測 rc=0）。**正解在 lexicon 倉**：移除其 `CSQLite3` 目標的 `.unsafeFlags(["-w"])`（並使兩支 plugin 產品的平台宣告不低於本側之 `nil` 地板）後出新版——已登記為 §十四 **N4**。該 manifest 檔頭第 5 條已就地載明此事與兩條已實測之替代路（`--disable-sandbox` 無效；`.package(path:)` 可過 unsafe flags、但撞 10.15 平台下限）。
 
 **hash 複測（2026-09-16，事主三倉各自 rebase 之後；同日晚些之再一波 rebase 後復再複測一次，下表為後者）**：本檔與 `Phase216_PostResearch.md`、`Reqs_0211-0220.md` 中所引之「現行」hash 已全數複測更新（`vChewing-LibVanguard`：`208554e`／`1c60407`；`vChewing-macOS`：`7d920ec3`／`bcaebc46`／`418015a3`／`07575402`；`vChewing-DevLogs`：`4429504`／`942557d`——**惟此兩筆其後已隨該倉之 rebase 消失、於任何 ref 皆無對位可尋；其內容現摺於 `a046d0c`（`P126-P128.`；該筆即 `83b473c`／`d24a0cb` 之現值，亦即其後第三、四波之結果——P216～P218 之文書與 P126～P128 之內容現同在一筆）**）。三倉於該次複測時皆 **clean**。依 §十二 R12，hash 仍會隨下一次 amend／rebase 失效——**判準一律以「訊息 ＋ 小節主題」為準**。
 
@@ -1270,7 +1270,7 @@ error: 'vchewing_mainassembly4darwin': the target 'CSQLite3' in product 'Vanguar
 | **N1** | **讓 5.10 側的產物鏈進「macOS 10.9 唯音輸入法」的 app 建置**（含 `vChewing.xcodeproj` 端把兩支 assembly 的 `.a` 鏈進最終 binary、並在該處完成 libArcLite 與 macOS 10.9 compatible Swift Runtime 的摻入） | 「如果是指對 **macOS 10.9 的唯音輸入法**的話，此乃**待決事項**。**這得需要我部署好 macOS 10.9 專用的 xcodeproj 才行。留待下一個 phase 處理。**」 | **事主先部署「macOS 10.9 專用的 xcodeproj」** | §1.1（終點）、§4.2 第 4 條（`.a` 之用途）、§9.6（⑦⑧ 兩處已定案之背景） |
 | **N2** | **舊版 Xcode 專用 pbxproj 的建立與維護**（與新 Xcode 分開） | 同 Q07：「Legacy 倉庫的建置會引入『舊版 Xcode 專用的 pbxproj』。如果都讓一個 pbxproj 負責的話，新版 Xcode 可能會自動摧毀掉舊版系統的 compilability。」 | 同 N1（需先有 10.9 專用專案） | §1.3、§9.6（Q07 處） |
 | **N3** | **已完成（2026-09-15）**——原待辦：**待 Swift 6.4 正式問世後**，把 **Swift 6.2／6.3 加入封堵清單**（**兩倉同步**），使 Swift 6.x 的工具鏈僅支援 **6.4+**。落地：五個 `Package.swift`（兩倉之聚合體、聚合體之 `Deps/VanguardSwiftExtension`、`vChewing-macOS` 倉根 meta-manifest）之宣告值抬到 6.4 ＋ 各鋪兩份封堵檔；三系統 CI 的 toolchain pin 同批抬到 ≥6.4（本機驗收：6.3.3 被攔、6.4.0 之 535 項測試全綠）。commit：`vChewing-LibVanguard` = `1c60407`、`vChewing-macOS` = `418015a3`。**歸屬（2026-09-15 事主劃定分水嶺後定案）**：本筆於 macOS 側之**倉根 meta-manifest ＋ 三條 CI workflow**（toolchain pin 抬至 ≥6.4）屬 **P217**——記於 `Reqs4LLM/Archive_P201-P300/Reqs_0211-0220.md` 之〈P216／P217 之分水嶺〉；其**LibVanguard 側**（封堵檔與 manifest 抬版）則與 `1c60407` 同屬 **P216**、記於同卷 P216 之〈跨倉同步〉對照表。**同一筆 commit 橫跨兩 phase 時，按檔案所屬分記、不整筆重複登記。** | 「過幾天等 Swift 6.4 正式問世之後將 Swift 6.2 與 6.3 加入封堵清單、Swift 6.x 的工具鏈僅支援 Swift 6.4+。」（理由：6.2／6.3 對本倉的兩個 conformance 噴 `#ConformanceIsolation`、要求明文 `@MainActor`——**三系統 CI 已逐條核對，Swift 6.2 亦然**，見 P216 §13.6.8） | **Swift 6.4 正式問世**（已滿足：`swift-6.4.0-RELEASE` 於 2026-09-14 發佈）；且須與**三系統 CI 的 toolchain 換版同一批落地**（否則封堵令會先把 CI 擋死）（已同批落地）；另須確認建置環境可指定 Open Source Toolchain（Intel Mac 側的 Xcode 上限為 26.x，見 §2.2 環境認知與 P216 §13.6.9） | **P216 §13.6**（實測、方案 B、屆時要動的清單）、§三（封堵檔的未來擴充）、§十二 R22 |
-| **N4** | **讓 `vChewing-VanguardLexicon` 出一個「5.10 可消費」的版本**——移除 `CSQLite3` 靶的 `.unsafeFlags(["-w"])`（或改用非 unsafe 的等效設定），並確認兩支 plugin 產品（`TextTemplateAssetInjectorPlugin`／`VanguardTextMapPlugin`）的平台宣告不低於 5.10 側之 `nil` 地板（10.13）。辦妥之後，`vChewing_MainAssembly4Darwin` 之 5.10 manifest 即可與 `Package.swift` 同構而仍可建置（該 manifest 目前已同構、故該包 5.10 側 rc≠0） | 「**已經與 Swift 5.10 相容。**現階段不用處理。」（事主 2026-09-15 之 Q09）——惟 2026-09-16 之實測顯示其在 **SwiftPM 依賴層**仍不相容；改動該倉屬**另一倉庫之發版作業**，非本 workspace 之建置手術所能代勞 | `vChewing-VanguardLexicon` 出新版（並把 `exact:` pin 抬到該版） | 本 SOP §十二 R7、§13.1 第 18 列、§13.4 第一點 |
+| **N4** | **讓 `vChewing-VanguardLexicon` 出一個「5.10 可消費」的版本**——移除 `CSQLite3` 目標的 `.unsafeFlags(["-w"])`（或改用非 unsafe 的等效設定），並確認兩支 plugin 產品（`TextTemplateAssetInjectorPlugin`／`VanguardTextMapPlugin`）的平台宣告不低於 5.10 側之 `nil` 地板（10.13）。辦妥之後，`vChewing_MainAssembly4Darwin` 之 5.10 manifest 即可與 `Package.swift` 同構而仍可建置（該 manifest 目前已同構、故該包 5.10 側 rc≠0） | 「**已經與 Swift 5.10 相容。**現階段不用處理。」（事主 2026-09-15 之 Q09）——惟 2026-09-16 之實測顯示其在 **SwiftPM 依賴層**仍不相容；改動該倉屬**另一倉庫之發版作業**，非本 workspace 之建置手術所能代勞 | `vChewing-VanguardLexicon` 出新版（並把 `exact:` pin 抬到該版） | 本 SOP §十二 R7、§13.1 第 18 列、§13.4 第一點 |
 
 > **N4 已由 P218 取代（2026-09-16）**：lexicon 之 deploy 工具真正用上 Swift Concurrency（其 manifest 須宣告 macOS 10.15），本側 5.10 既不可能收它、亦無法靠降其地板或抬本側地板解套；「另尋資料注入他法」移入 P218。
 
@@ -1291,7 +1291,7 @@ error: 'vchewing_mainassembly4darwin': the target 'CSQLite3' in product 'Vanguar
 | **Q01（①）** | `vChewingDebuggable` 是否做 5.10 相容？ | **目前不需要。** | 「這個 target 是用來測試 memory footprint 的。所有不內建 Swift Runtime 的 macOS 系統下的記憶體佔用可能都會多出 200MB、以供 Swift Runtime（包括各種 Swift AppKit Shim dylib）使用。此乃已知狀況，不需要 `vChewingDebuggable` 再專門據此測試。」 | §1.1 表、§1.3 |
 | **Q02（②）** | Legacy 繼承清單（哪些模組可繼承） | **case-by-case 逐一確認。** | 「Legacy 倉庫的本質是 vChewing-macOS 倉庫的**子集 ＋ Swift 5.10 Dialect**。之所以說是『子集』，是因為**砍掉了 SwiftUI**。」 | §1.3、§5.1(g) |
 | **Q03（③）** | 最低 macOS 版本的最終取捨（`platforms` 填什麼） | **5.10 專用 manifest 的 `platforms` 一律填 `nil`**；SwiftUI 一律 macOS 14+。 | 「這樣才能逼著 Xcode 15- 拿 macOS SDK 確認 **10.9 API 合規性**。換言之就是對一般情況**故意不設 Availability 限制**。**SwiftUI 的 Availability 一律 macOS 14+**。」 | §2.3、§四、§5.5 |
-| **Q04（④）** | 非出貨靶的產物形態（minOS／triple） | **作廢。** 因 ① 不納入，**非出貨靶不存在於 5.10 側**，本項失其前提。 | 同 Q01 | 已自 §4.3 移除；原處改記「本項已作廢」 |
+| **Q04（④）** | 非出貨目標的產物形態（minOS／triple） | **作廢。** 因 ① 不納入，**非出貨目標不存在於 5.10 側**，本項失其前提。 | 同 Q01 | 已自 §4.3 移除；原處改記「本項已作廢」 |
 | **Q05（⑤）** | `Tekkon.sharedCache` 是否併辦？ | **不用處理。** | 「**Tekkon 與 Homa 都不用處理**，因為已經相容，**都在 P216 解決了**。這兩個 target 的建置**沒有被釘死在 MainActor 上**，且 Legacy 倉庫的寫法目前也是 `nonisolated(unsafe) private static var sharedCache: [Int: PinyinTrie] = [:]`。」 | §6.4（＋§5.4 對齊） |
 | **Q06（⑥）** | `withFileHandleQueue` 是否退役？ | **不用退役。** 並立三條規則。 | 「這個 Queue **只管任務觸發時機**，實際的 lambda expression 內的任務執行仍舊**套一圈 MainActor `mainSync`**（**需要以 `mainSync {}` 觸發、而非 `{ @MainActor in }` 等不相容寫法**）。**POM 相關的 Queue 同理。**然而，你得注意，**不能讓同一個檔案被多個 Actor 同時讀寫**。」 | §6.2、§6.4、§十二 R21 |
 | **Q07（⑦）** | `project.pbxproj` 是否要動？ | **先不動。** | 「Legacy 倉庫的建置會引入『**舊版 Xcode 專用的 pbxproj**』。如果都讓一個 pbxproj 負責的話，**新版 Xcode 可能會自動摧毀掉舊版系統的 compilability**。」 | §1.3、§9.6 |
@@ -1308,7 +1308,7 @@ error: 'vchewing_mainassembly4darwin': the target 'CSQLite3' in product 'Vanguar
 
 | 舊編號 | 處置 |
 |---|---|
-| ① | 收斂重寫（出貨執行檔由規則 2 排除；現只問非出貨靶）→ 本輪由 Q01 裁定 |
+| ① | 收斂重寫（出貨執行檔由規則 2 排除；現只問非出貨目標）→ 本輪由 Q01 裁定 |
 | ②（新規 2 之前的舊②） | 定案移出（5.10 側用途＝compilability，新規 2） |
 | ②（規則 3 衍生者） | 原列「Legacy 繼承清單」→ 本輪由 Q02 裁定為 case-by-case |
 | ③、④ | ③ 由 Q03 裁定；④ 因 Q01 連帶作廢 |
