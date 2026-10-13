@@ -673,4 +673,4 @@ Trie 層
 
 **已解決（自待決清單移除）**：γ／α／B/C/E／A/D 全部落地；l10n 四語；整詞確認／空格
 固化 trail 政策；`partialMatchEnabled` 與 α 的關係；user-phrase 簡拼策略；Shift 提示；
-雙拼（永久不做）。
+雙拼（現階段久不做）。
