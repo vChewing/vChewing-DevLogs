@@ -135,20 +135,35 @@ STANDARD_PHASES = {242, 243, 244, 246, 247, 248, 249,                # 標準 �
                          # ＋ 新測試檔 9 支用例）；自動推測誤判為「修補」（字數 3,950 落在推測門檻
                          # 內），惟該篇載兩條病灶（日誌重播繞過容量、檢索全表掃描）、四項被否決
                          # 之方案與一條持久化層之既有界線（移除記錄不被重播採納）。
-                   306}  # P306 ＝ 標準：四檔（`replayApplicator` 之介面改為有序變化流 ＋ 標記層不再
+                   306,  # P306 ＝ 標準：四檔（`replayApplicator` 之介面改為有序變化流 ＋ 標記層不再
                          # 靜默丟棄移除 ＋ 新測試檔 5 支用例）；自動推測誤判為「修補」（字數 3,587
                          # 落在推測門檻內），惟該篇載兩條病灶（移除無從表達於鍵值映射、節流連移除
                          # 一併丟棄）、三項被否決之方案與兩條已知界線（節流之殘餘、逐出標記被重播
                          # 尾端之 pending 清理一併清掉）。型態係按性質判定，非按字數。
+                   307}  # P307 ＝ 標準 ×2（併案）：其型態與額度之理由見下方 `MERGED_PHASES` 之登錄
+                         # （事主將浮動組字窗一項併入同一 phase）。
+
+# 併案之 phase：原已按性質登錄於上表，其事後經事主將另一病灶併入同一 phase ⇒ 6,000。
+MERGED_PHASES = {307}  # P307 ＝ 標準 ×2（併案）：原案為會話層之啟用路徑陳跡收斂（`SessionProtocol`
+                       # 之三處直接賦值各補素材之丟棄與客體內文組字區之清空 ＋ 兩支新用例，其一係
+                       # 既有語義之釘樁）；事主續將浮動組字窗（Darwin 側 `PopupCompositionBuffer`）
+                       # 之「遲到之收合請求收掉剛顯之窗」併入同一 phase，遂增協定之
+                       # `isRetainedOnCloseRequest` 與第三支用例。兩病灶各載一條關鍵不變量、一項取捨
+                       # （捨遞交而取丟棄）、數項被否決之方案（`updateCompositionBufferDisplay()`、
+                       # `switchState(.ofEmpty())`、於雙拼層拒收待配首鍵期間之數字）與一項經事主實測
+                       # 否證之假說（聲調鍵之說——`9` 非聲調鍵亦然）；5,840 chars 係兩案之總和，
+                       # 型態按性質判定，非按字數。
+
 BUDGET_OVERRIDES = dict([(p, 8000) for p in LARGE_PHASES]
-                        + [(p, 5000) for p in STANDARD_PHASES])
+                        + [(p, 5000) for p in STANDARD_PHASES]
+                        + [(p, 6000) for p in MERGED_PHASES])
 
 
 def budget_for(phase, chars):
     """回傳 (額度, 型態名)。"""
     if phase in BUDGET_OVERRIDES:
         lim = BUDGET_OVERRIDES[phase]
-        name = {2500: "修補", 5000: "標準", 8000: "大型"}[lim]
+        name = {2500: "修補", 5000: "標準", 6000: "標準", 8000: "大型"}[lim]
         return lim, name
     if chars <= 4000:
         return BUDGETS["patch"], "修補"
