@@ -824,6 +824,7 @@ Assignee: Model（Harness）。
 
 
 - **★ POM（`LXPerceptor`）之容量與索引不變量（2026-10-14，P305／P306；GitHub Issue 620）**：①`mutLRUMap` 與 `mutLRUKeySeqList` 必須恆同構、且映射不得超出 `mutCapacity`；凡新增「載入／移除」路徑（含 `loadData(fromURL:)` 之日誌重播）一律收在 `enforceCapacity()` 之下——只寫其中一者之寫法必令容量上限失效。②新增記憶鍵須同步三組 head 索引與 `parsedKeyCache`（`registerPerceptionIndex`／`unregisterPerceptionIndex`）；索引為**超集**，不得取代查詢自身之完整判準。③日誌重播以**有序變化陣列** `[JournalChange]`（`.clear`／`.upsert`／`.remove(key:)`）交付（P306）；凡需表達「刪除」之處不得再以「鍵值映射之差」為之（字典無從區分「未提及」與「已移除」），新增變化種類時須同步 `LXPerceptor.loadData(fromURL:)` 之套用 `switch`。④標記層之 per-key 節流（`perKeyThrottleInterval = 2.0`）只准略過「其 upsert 尚未落盤」之移除；凡已落盤者一律記錄移除，否則該鍵重啟後自快照復活（P306 修正）。
+- **★ 客體顯示刷新與狀態切換之解耦（2026-10-15，P308；`7f70ed6`／`5646ad8e`）**：`switchState(_:deferringDisplayRefresh:caller:line:)` 之新參數只延後**客體落筆**、不改狀態語義；設者於狀態非候選容器、且 `state.tooltip.isEmpty` 時記旗標（`InputHandlerProtocol.hasDeferredCompositionDisplayRefresh`，實底為 `DualpinConfig`），由 `triageInput(event:)` 之 `defer` 一次性結算。**面板錨定與帶 tooltip 者一律即時刷新**（`clientLineHeightRectForU16CursorPos:` 之量測須以客體已見之組字區為準）；`IMEState.tooltip` 對「無提示」係**空字串非 `nil`**，以 `!= nil` 判之則永不延後。重複補刷無害：`doSetMarkedText` 之寫入快取（空對空、同文同範圍）會吞掉；「素材已去」之投機空筆則因此延到事件末（數字案不增往返）。
 
 
 ---
