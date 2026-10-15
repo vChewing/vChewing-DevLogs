@@ -7,21 +7,26 @@
 而是同批事實在一份 phase 內、以及跨四份文件之間的重複。本稽核即把該預算寫成可執行之量尺：
 它**不判內容好壞**，只報「誰超預算、超在哪一份文件」。
 
-**量尺**（規則本體見 `KnowledgeMemo4LLM.md` §12.7；改規則請同步改本檔之 BUDGETS）：
+**量尺**（規則本體見 `KnowledgeMemo_SubArticles/22-HouseStyle.md` §12.7；改規則請同步改本檔之
+`BUDGETS` 與 `SUB_ARTICLE_MAX`）：
 
 * **Reqs 卷之 Phase 篇**：標準 ≤ 5,000 chars；修補型 ≤ 2,500；大型／系列／規劃 ≤ 8,000。
   本稽核以「該篇佔本卷全部 Phase 之中位數之 K 倍」不判斷，只列字數與超標倍率。
 * **`DevReqsHistory.md` 各列**：≤ 300 chars。
-* **`KnowledgeMemo4LLM.md` 開頭之逐 Phase 記述**：**不得存在**（該檔只收「現況」與
-  「施工注意事項」，見該檔文首〈沿革不再寫入本文檔〉）。本稽核以「開頭部（首個 `## ` 之前）
-  有無 `- **…Phase NNN…已完工` 形之條目」偵測之。
+* **`KnowledgeMemo4LLM.md` 之各分卷**（`KnowledgeMemo_SubArticles/*.md`）：**每卷 ≤ 12,000 chars**
+  （2026-10-15 拆分時訂立）。其故：該備忘錄原為單檔 188,646 chars，AI Agent 一見即「寧願只讀一部分」
+  ⇒ 拆成「索引 ＋ 分卷」後，**每一卷都必須小到能整卷讀完**。索引本體 `KnowledgeMemo4LLM.md` 亦一併列報。
+* **`KnowledgeMemo4LLM.md`（含各分卷）之逐 Phase 記述**：**不得存在**（該檔只收「現況」與
+  「施工注意事項」，見該檔文首〈沿革不再寫入本文檔〉）。本稽核以「索引全文與各分卷全文中
+  有無 `- **…Phase NNN…已完工` 形之條目」偵測之（**不限於開頭部**——各分卷亦一併掃）。
 * **儀式小節**：`§8.0.1 三步`（對帳／回寫本文／重排後續）、`兩倉 byte-sync`、
   `測試基線之同框對照`、`變異測試` 四類——**不得逐 Task 重複**；同一 phase 內出現
   逾一次即列出。
 
 **判與不判**：**預算只管「現行卷之首 Phase 起」**（預設自動判定；可用 `--enforce-from N` 覆寫）。
 在此之前之各卷為**已歸檔之歷史記錄**，一律照舊——本稽核只把它們列為 `legacy（不判）`，
-不使其左右退出碼。此界線與 `KnowledgeMemo4LLM.md` §12.7.6 之「不回改歷史」一致。
+不使其左右退出碼。此界線與 `KnowledgeMemo_SubArticles/23-HouseStyleCleanup.md` §12.7.6 之
+「不回改歷史」一致。
 
 **用法**：
 
@@ -43,7 +48,7 @@ import re
 import sys
 import tempfile
 
-# ── 量尺（改這裡即改規則；請與 KnowledgeMemo4LLM.md §12.7 同步）────────────────
+# ── 量尺（改這裡即改規則；請與 22-HouseStyle.md §12.7 同步）──────────────────
 BUDGETS = {
     "patch": 2500,     # 修補型：1–3 檔、零設計
     "standard": 5000,  # 標準
@@ -53,7 +58,11 @@ HISTORY_ROW_MAX = 300          # DevReqsHistory 單列
 # §12.7 係 2026-09-27（P261 完工後）訂立 ⇒ 預算自 **P262** 起適用；
 # 其前之各卷為「訂立前之歷史記錄」，一律 legacy（不判），與 §12.7.6 之「不回改歷史」一致。
 HOUSESTYLE_EPOCH_PHASE = 262
-MEMO_HEAD_FORBIDDEN = True     # KnowledgeMemo 開頭部不得有逐 Phase 記述
+MEMO_HEAD_FORBIDDEN = True     # KnowledgeMemo（索引與各分卷）皆不得有逐 Phase 記述
+# 2026-10-15 起 KnowledgeMemo4LLM.md 之正文移入下列子目錄之分卷；
+# 每卷之上限即「一眼可讀完」之尺（索引本體不受此限，另列報）。
+SUB_ARTICLES_DIR = "KnowledgeMemo_SubArticles"
+SUB_ARTICLE_MAX = 12000        # 單一分卷之 chars 上限
 RITUAL_ONCE_MAX = 1            # 同一 phase 內每類儀式小節至多一次
 
 RITUALS = {
@@ -237,7 +246,8 @@ def sections(body):
 
 
 def current_volume_first_phase(root):
-    """依 KnowledgeMemo4LLM.md 文首〈Reqs4LLM 分卷歸檔註記〉現算現行卷之首 Phase。"""
+    """依 `KnowledgeMemo4LLM.md` 文首〈Reqs4LLM 分卷歸檔註記〉所定之規則，現算現行卷之首 Phase。
+    （實作只走檔案系統，不讀該檔內文——故本函式不隨該檔之拆分而變。）"""
     vols = []
     for dirpath, _d, files in os.walk(os.path.join(root, "Reqs4LLM")):
         for fn in files:
@@ -314,12 +324,31 @@ def audit_history(root):
     return rows, len(text)
 
 
+def list_sub_articles(root):
+    """回傳 [(檔名, chars, 內容)]，即 KnowledgeMemo4LLM.md 之各分卷（依檔名遞增）。"""
+    sd = os.path.join(root, SUB_ARTICLES_DIR)
+    out = []
+    if not os.path.isdir(sd):
+        return out
+    for fn in sorted(os.listdir(sd)):
+        if not fn.endswith(".md"):
+            continue
+        text = io.open(os.path.join(sd, fn), encoding="utf-8").read()
+        out.append((fn, len(text), text))
+    return out
+
+
 def audit_memo(root):
     path = os.path.join(root, "KnowledgeMemo4LLM.md")
     text = io.open(path, encoding="utf-8").read()
     head = text.split("\n## ", 1)[0]
-    entries = [l for l in head.split("\n") if MEMO_PHASE_ENTRY_RE.match(l)]
-    blocks = [l for l in head.split("\n") if l.startswith("- **") and ("狂打" in l or "之注音化" in l)]
+    entries = [l for l in text.split("\n") if MEMO_PHASE_ENTRY_RE.match(l)]
+    blocks = [l for l in text.split("\n") if l.startswith("- **") and ("狂打" in l or "之注音化" in l)]
+    subs = list_sub_articles(root)
+    for _fn, _chars, st in subs:
+        entries += [l for l in st.split("\n") if MEMO_PHASE_ENTRY_RE.match(l)]
+        blocks += [l for l in st.split("\n") if l.startswith("- **") and ("狂打" in l or "之注音化" in l)]
+    rows = sorted([{"name": fn, "chars": c} for fn, c, _ in subs], key=lambda r: -r["chars"])
     return {
         "chars": len(text),
         "bytes": len(text.encode("utf-8")),
@@ -328,6 +357,9 @@ def audit_memo(root):
         "phase_entry_chars": sum(len(l) + 1 for l in entries),
         "furious_blocks": len(blocks),
         "furious_block_chars": sum(len(l) + 1 for l in blocks),
+        "sub_articles": rows,
+        "sub_chars": sum(r["chars"] for r in rows),
+        "sub_over": [r for r in rows if r["chars"] > SUB_ARTICLE_MAX],
     }
 
 
@@ -388,11 +420,22 @@ def report(data, since=0):
     m = data["memo"]
     print("═══ KnowledgeMemo4LLM.md ═══")
     print("  全檔 %d chars / %d bytes" % (m["chars"], m["bytes"]))
-    print("  開頭部 %d chars；逐 Phase 記述 %d 條、%d chars"
+    print("  索引開頭部 %d chars；逐 Phase 記述 %d 條、%d chars（索引與各分卷合計）"
           % (m["head_chars"], m["phase_entries"], m["phase_entry_chars"]))
     print("  狂打相關區塊 %d 條、%d chars" % (m["furious_blocks"], m["furious_block_chars"]))
     if MEMO_HEAD_FORBIDDEN and m["phase_entries"]:
-        over.append("KnowledgeMemo 開頭部仍有 %d 條逐 Phase 記述" % m["phase_entries"])
+        over.append("KnowledgeMemo（索引或分卷）仍有 %d 條逐 Phase 記述" % m["phase_entries"])
+
+    if m["sub_articles"]:
+        print()
+        print("═══ %s/（每卷 ≤ %d chars）═══" % (SUB_ARTICLES_DIR, SUB_ARTICLE_MAX))
+        for r in m["sub_articles"]:
+            flag = "  ← 逾 %.2f×" % (r["chars"] / SUB_ARTICLE_MAX) if r["chars"] > SUB_ARTICLE_MAX else ""
+            print("  %-44s %6d chars%s" % (r["name"], r["chars"], flag))
+            if flag:
+                over.append("%s（%d chars）" % (r["name"], r["chars"]))
+        print("  共 %d 卷、%d chars（均 %d）"
+              % (len(m["sub_articles"]), m["sub_chars"], m["sub_chars"] // len(m["sub_articles"])))
 
     print()
     if over:
@@ -421,13 +464,17 @@ def self_test():
             "| Phase 251 | " + "a" * 400 + " |\n")
         io.open(os.path.join(root, "KnowledgeMemo4LLM.md"), "w", encoding="utf-8").write(
             "# T\n\n- **狂打模式之注音化：**Phase 251 已完工（2026-09-26）——敘述。\n\n## 一、專案概述\n")
+        os.makedirs(os.path.join(root, SUB_ARTICLES_DIR))
+        io.open(os.path.join(root, SUB_ARTICLES_DIR, "00-Oversized.md"), "w", encoding="utf-8").write(
+            "# 過大之分卷\n\n" + ("w" * 100 + "\n") * (SUB_ARTICLE_MAX // 100 + 5))
         d = run(root, 251)
         red = (d["reqs"][0]["chars"] > BUDGETS["large"]
                and sum(1 for v in d["reqs"][0]["rituals"].values() if v > RITUAL_ONCE_MAX) >= 1
                and any(x["chars"] > HISTORY_ROW_MAX for x in d["history"])
                and d["memo"]["phase_entries"] == 1
-               and d["reqs"][0]["rules"] == 1)
-        print("紅驗：超預算／儀式重複／History 超長／Memo 逐 Phase 記述／篇內橫線 —— %s"
+               and d["reqs"][0]["rules"] == 1
+               and len(d["memo"]["sub_over"]) == 1)
+        print("紅驗：超預算／儀式重複／History 超長／Memo 逐 Phase 記述／篇內橫線／分卷過大 —— %s"
               % ("偵得" if red else "★漏檢★"))
         ok &= red
 
@@ -438,13 +485,16 @@ def self_test():
             "| Phase 251 | 短摘要。 |\n")
         io.open(os.path.join(root, "KnowledgeMemo4LLM.md"), "w", encoding="utf-8").write(
             "# T\n\n- 本文檔供 AI Agent 參考。\n\n## 一、專案概述\n")
+        io.open(os.path.join(root, SUB_ARTICLES_DIR, "00-Oversized.md"), "w", encoding="utf-8").write(
+            "# 合規之分卷\n\n短。\n")
         d = run(root, 251)
         green = (d["reqs"][0]["chars"] <= BUDGETS["large"]
                  and all(v <= RITUAL_ONCE_MAX for v in d["reqs"][0]["rituals"].values())
                  and all(x["chars"] <= HISTORY_ROW_MAX for x in d["history"])
                  and d["memo"]["phase_entries"] == 0
+                 and d["memo"]["sub_over"] == []
                  and d["reqs"][0]["rules"] == 0)
-        print("綠驗：合規樣本不誤報（表格表頭不誤判） —— %s" % ("通過" if green else "★誤報★"))
+        print("綠驗：合規樣本不誤報（表格表頭、分卷不誤判） —— %s" % ("通過" if green else "★誤報★"))
         ok &= green
     return 0 if ok else 1
 

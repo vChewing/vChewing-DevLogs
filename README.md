@@ -8,7 +8,8 @@
 
 ```text
 vChewing-DevLogs/
-├── KnowledgeMemo4LLM.md       # 架構知識 ＋ 給 AI Agent 的 Response Pattern（開工前必讀）
+├── KnowledgeMemo4LLM.md       # **索引**：開工前必讀之鐵律 ＋ 任務→必讀分卷之路由表
+├── KnowledgeMemo_SubArticles/ # 上列索引之正文分卷（`00-RuleIndex.md` 為條目級索引；開工前亦必讀）
 ├── DevReqsHistory.md          # 逐 Phase 開發史摘要
 ├── Reqs4LLM/                  # Phase 需求書與實作記錄
 │   ├── Reqs_Other_Pending_Phases.md
@@ -16,13 +17,18 @@ vChewing-DevLogs/
 │   ├── Archive_P101-P200/     # 已凍結（Phase 101~200 收齊）
 │   └── Archive_P201-P300/     # 未凍結；內含現行卷（檔名現算，見 KnowledgeMemo4LLM.md 文首〈Reqs4LLM 分卷歸檔註記〉）
 ├── Research/                  # 各 Phase 的研究報告
+├── Tools/                     # 跨倉小工具（記述預算稽核、截斷絆線、安全改檔）
 └── PendingFeatureReqs/        # FeatureRequest 類 PreResearch
 ```
 
+> `KnowledgeMemo4LLM.md` 於 2026-10-15 由單一 188,646 chars 之長檔拆分為「**索引 ＋ 分卷**」：
+> 索引只收鐵律與路由表，正文按主題住 `KnowledgeMemo_SubArticles/NN-Topic.md`。**只讀索引不足以開工**
+> ——其故與紀律見索引〈二、開工前必讀之順序〉。分卷之檔名一經問世即凍結，新增主題者續編新號。
+
 ## 使用方式
 
-- **文書之寫作紀律（House Style）**：見 `KnowledgeMemo4LLM.md` §12.7——**一處一寫**（durable 事實入 `KnowledgeMemo4LLM.md`、本 Phase 之證據入 Reqs 卷、索引入 `DevReqsHistory.md`、長篇推導入 `Research/`），並有**篇幅預算**與**固定骨架**。交差前跑一次 `python3 Tools/housestyle_audit.py` 檢核（超標須在回報中寫明理由）。**`Research/` 各檔不在此限。** 適用起點為 P262；**P241–P261 已於 2026-09-27 回溯套用**（實績見 §12.7.6），以 `python3 Tools/housestyle_audit.py --enforce-from 241` 可複驗。**注意：語言鐵律只管正文、不管引句——他語系（zh-Hans／ja／en）之出貨文案須逐字保留**（§12.7.5 第 10 條）。
-- **AI Agent**：開工前先讀 `KnowledgeMemo4LLM.md`，尤其其中的〈Response Pattern〉與 §12 的文件更新規則。新 Phase 之記錄一律寫入**現行卷**（**檔名現算、不以硬寫之檔名記載**：取 `Reqs4LLM/Archive_P*/` 之下標號最大的 `Reqs_0NN1-0NN0.md`，其 `^# Phase ` 標題數未達 10 者即為現行卷；判定式見 `KnowledgeMemo4LLM.md` 文首〈Reqs4LLM 分卷歸檔註記〉）；已滿或已結案的歸檔卷不再增改——**但對過往 Phase 之補記不在此限**：無論該卷是否已歸檔，補記一律補進**那個 Phase 自己的記錄內**，不得佔用其他 Phase（含現行卷）的記錄空間。
+- **文書之寫作紀律（House Style）**：見 `KnowledgeMemo_SubArticles/22-HouseStyle.md` §12.7——**一處一寫**（durable 事實入 `KnowledgeMemo_SubArticles/` 之相關分卷、本 Phase 之證據入 Reqs 卷、索引入 `DevReqsHistory.md`、長篇推導入 `Research/`），並有**篇幅預算**與**固定骨架**。交差前跑一次 `python3 Tools/housestyle_audit.py` 檢核（超標須在回報中寫明理由）。**`Research/` 各檔不在此限。** 適用起點為 P262；**P241–P261 已於 2026-09-27 回溯套用**（實績見 `KnowledgeMemo_SubArticles/23-HouseStyleCleanup.md` §12.7.6），以 `python3 Tools/housestyle_audit.py --enforce-from 241` 可複驗。**注意：語言鐵律只管正文、不管引句——他語系（zh-Hans／ja／en）之出貨文案須逐字保留**（§12.7.5 第 10 條）。
+- **AI Agent**：開工前先讀 `KnowledgeMemo4LLM.md`（索引與鐵律）與 `KnowledgeMemo_SubArticles/00-RuleIndex.md`（全分卷條目級索引），再依索引〈三、任務→必讀分卷〉取用分卷正文；其中〈Response Pattern〉見 `KnowledgeMemo_SubArticles/15-AgentResponsePattern.md`、文件更新規則見同檔 §12.2。新 Phase 之記錄一律寫入**現行卷**（**檔名現算、不以硬寫之檔名記載**：取 `Reqs4LLM/Archive_P*/` 之下標號最大的 `Reqs_0NN1-0NN0.md`，其 `^# Phase ` 標題數未達 10 者即為現行卷；判定式見 `KnowledgeMemo4LLM.md` 文首〈Reqs4LLM 分卷歸檔註記〉）；已滿或已結案的歸檔卷不再增改——**但對過往 Phase 之補記不在此限**：無論該卷是否已歸檔，補記一律補進**那個 Phase 自己的記錄內**，不得佔用其他 Phase（含現行卷）的記錄空間。
 - **人類讀者**：`DevReqsHistory.md` 是最快的入口（逐 Phase 一行摘要），要細節再進 `Reqs4LLM/` 或 `Research/`。
 
 ## 慣例

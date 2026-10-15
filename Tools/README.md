@@ -7,7 +7,7 @@ Python 3 單檔（只用標準庫），可直接執行。
 |---|---|---|
 | `check_integrity.py` | **截斷絆線**：比對工作區與 `HEAD` 之每一份受版控檔案大小，凡「HEAD 有內容而工作區為 0 bytes」即 CRITICAL | `python3 check_integrity.py` |
 | `safepatch.py` | **安全改檔**：read → 逐字替換 → 原子寫入，附三道守衛（錨點次數、非空結果、不得大幅縮減） | `python3 safepatch.py --file X --old-file /tmp/old --new-file /tmp/new` |
-| `housestyle_audit.py` | **記述預算稽核**：量 Reqs 卷各 Phase 篇之字數與儀式重複、`DevReqsHistory` 各列長度、`KnowledgeMemo` 開頭部是否混入逐 Phase 記述 | `python3 housestyle_audit.py`（交差前跑一次） |
+| `housestyle_audit.py` | **記述預算稽核**：量 Reqs 卷各 Phase 篇之字數與儀式重複、`DevReqsHistory` 各列長度、`KnowledgeMemo` 之各分卷字數、是否混入逐 Phase 記述 | `python3 housestyle_audit.py`（交差前跑一次） |
 
 工作區根部另有同名之 symlink（`_MainWorkspace/check_integrity.py`、
 `_MainWorkspace/safepatch.py`），與既有之 `lint_zhtw.*` 同居，故在根部直接跑即可。
@@ -26,11 +26,14 @@ python3 housestyle_audit.py --self-test
 > `--since N` 只決定**載入哪些 phase**；真正的**判斷起點**是 `--enforce-from N`（或預設之
 > `max(現行卷首 phase, HOUSESTYLE_EPOCH_PHASE)`）。要複驗某段範圍，用後者。
 
-**量尺**（規則本體見 `KnowledgeMemo4LLM.md` §12.7；改規則請同步改本檔之 `BUDGETS`）：
+**量尺**（規則本體見 `KnowledgeMemo_SubArticles/22-HouseStyle.md` §12.7；改規則請同步改本檔之
+`BUDGETS`／`SUB_ARTICLE_MAX`）：
 
 - **Reqs 卷之 Phase 篇**：修補型 ≤ 2,500／標準 ≤ 5,000／大型 ≤ 8,000 chars。
 - **`DevReqsHistory.md` 各列** ≤ 300 chars（該檔是索引，非第二份正本）。
-- **`KnowledgeMemo4LLM.md` 開頭部不得有逐 Phase 記述**（該檔只收「現況」與「施工注意事項」）。
+- **`KnowledgeMemo4LLM.md` 之各分卷**（`KnowledgeMemo_SubArticles/*.md`）**每卷 ≤ 12,000 chars**
+  ——2026-10-15 拆分時立此尺，其故係「**每卷都必須小到能整卷讀完**」；索引本體一併列報而不受此限。
+- **`KnowledgeMemo4LLM.md`（含各分卷）不得有逐 Phase 記述**（該檔只收「現況」與「施工注意事項」）。
 - **儀式小節**（§8.0.1 收尾回檢／兩倉 byte-sync／測試基線／變異測試）同一 phase 內至多一次。
 - **分隔線**：`--------------------`（恰 20 連字號）**只准出現於 Phase 分界**；**Phase 篇之內部不得有任何以連續 `-` 組成之段落分割線**（§12.7.4）。表格表頭之 `|---|` 不算橫線，不會誤判。
 
@@ -38,7 +41,8 @@ python3 housestyle_audit.py --self-test
 故預設以字數推之；已明示型態者登錄於本檔之 `BUDGET_OVERRIDES`（現載 P241–P261 之回溯額度）。
 **新 phase 通常不必登記**——預算本容超標，記一行理由即可。
 
-**適用起點＝P262**（§12.7 訂於 2026-09-27、即 P261 完工之後；**P241–P261 已回溯套用**，見 §12.7.6；
+**適用起點＝P262**（§12.7 訂於 2026-09-27、即 P261 完工之後；**P241–P261 已回溯套用**，見
+`KnowledgeMemo_SubArticles/23-HouseStyleCleanup.md` §12.7.6；
 P240 及以前列為 `legacy（不判）`，`--all-history` 可改為嚴苛模式）。**它不判內容好壞**——只報「誰超預算、超在哪一份文件」。超標並非一律要改：**超標者須在交差回報中寫明一行理由**。
 
 ## 為何要有這兩支
