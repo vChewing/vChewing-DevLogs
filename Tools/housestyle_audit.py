@@ -141,7 +141,7 @@ STANDARD_PHASES = {242, 243, 244, 246, 247, 248, 249,                # 標準 �
                          # 一併丟棄）、三項被否決之方案與兩條已知界線（節流之殘餘、逐出標記被重播
                          # 尾端之 pending 清理一併清掉）。型態係按性質判定，非按字數。
                    307,  # P307 ＝ 標準 ×2（併案）：其型態與額度之理由見下方 `MERGED_PHASES` 之登錄
-                   308}  # P308 ＝ 標準：五檔（協定之 `switchState` 增延後參數、雙拼執行期之旗標與
+                   308,  # P308 ＝ 標準：五檔（協定之 `switchState` 增延後參數、雙拼執行期之旗標與
                          # 結算、分診入口之結算、退位者改採延後，暨一支新用例），非「1–3 檔、
                          # 零設計」之修補型：其載一條病灶（退位時之投機刷新必被同輪之下筆覆寫）、
                          # 一條根因（首鍵不落組字器 ⇒ 顯示之刷新全靠切態）、三項被否決之方案
@@ -149,6 +149,13 @@ STANDARD_PHASES = {242, 243, 244, 246, 247, 248, 249,                # 標準 �
                          # 踩到之陷阱（`IMEState.tooltip` 係空字串而非 `nil`）；自動推測誤判為
                          # 「修補」（字數 3,608 落在推測門檻內）。型態按性質判定，非按字數。
                          # （事主將浮動組字窗一項併入同一 phase）。
+                   311}  # P311 ＝ 標準：六檔（狀態層之 provisional 標記與兩枚工廠、`switchState` 之
+                         # 帶過與落筆受抑、輪末結算、生產者之收尾，暨兩支新用例），非「1–3 檔、
+                         # 零設計」之修補型：其載一條病灶（延後之憑據住會話參數與 handler 旗標
+                         # ⇒ 狀態一經強制轉換即失據）、一條根因（結算懸於分診入口 ⇒ 早退即不
+                         # 結算）、一項取捨（標記住狀態而型別仍正規化為 `.ofEmpty`，捨「保留
+                         # `.ofAbortion`」一途）與兩條界線；自動推測誤判為「修補」（字數 2,980
+                         # 落在推測門檻內）。型態按性質判定，非按字數。
 
 # 併案之 phase：原已按性質登錄於上表，其事後經事主將另一病灶併入同一 phase ⇒ 6,000。
 MERGED_PHASES = {307}  # P307 ＝ 標準 ×2（併案）：原案為會話層之啟用路徑陳跡收斂（`SessionProtocol`
@@ -257,6 +264,13 @@ def audit_reqs(root, since=0):
                 continue
             path = os.path.join(dirpath, fn)
             text = io.open(path, encoding="utf-8").read()
+            src = text.split("\n")
+            heading_at = {}
+            for k, l in enumerate(src):
+                m = re.match(r"^# Phase (\d+)", l)
+                if m:
+                    heading_at[int(m.group(1))] = k
+            first_heading = min(heading_at.values()) if heading_at else None
             for phase, _title, body in split_phases(text):
                 if phase < since:
                     continue
@@ -266,6 +280,12 @@ def audit_reqs(root, since=0):
                 chars = len(core) + 1
                 # §12.7.4：Phase 篇之內部不得有任何以連續 `-` 組成之段落分割線。
                 rules = [l for l in core.split("\n") if RULE_RE.fullmatch(l)]
+                # §12.7.4：卷際分隔線＝`--------------------`（恰 20 連字號），置於 `# Phase NNN`
+                # 之上一行，且其上下各一空行；該卷之首篇不設（其前無 Phase）。
+                i = heading_at.get(phase)
+                boundary = None
+                if i is not None and i != first_heading:
+                    boundary = (i >= 2 and src[i - 1].strip() == "" and src[i - 2] == "-" * 20)
                 rituals = {}
                 for name, rx in RITUALS.items():
                     hits = [h for h, _c in sections(body) if re.search(rx, h)]
@@ -278,6 +298,7 @@ def audit_reqs(root, since=0):
                     "headings": len([1 for l in body.split("\n") if HEADING_RE.match(l)]),
                     "rituals": rituals,
                     "rules": len(rules),
+                    "boundary": boundary,
                 })
     return rows
 
@@ -340,6 +361,8 @@ def report(data, since=0):
             rit = "  儀式重複：" + "、".join("%s×%d" % (k, v) for k, v in sorted(bad.items()))
         if r.get("rules"):
             rit += "  ← 篇內橫線 %d 條（§12.7.4 所禁）" % r["rules"]
+        if r.get("boundary") is False:
+            rit += "  ← 卷際分隔線不合規（須 20 連字號、上下各一空行）"
         print("  P%-4d %7d chars  %2d 小節  %s%s%s" % (r["phase"], r["chars"], r["headings"], r["volume"], flag, rit))
         if flag:
             over.append("P%d（%d chars）" % (r["phase"], r["chars"]))
@@ -347,6 +370,8 @@ def report(data, since=0):
             over.append("P%d 儀式重複" % r["phase"])
         if r.get("rules"):
             over.append("P%d 篇內橫線 %d 條" % (r["phase"], r["rules"]))
+        if r.get("boundary") is False:
+            over.append("P%d 卷際分隔線不合規" % r["phase"])
 
     if n_legacy:
         print("  （另有 %d 個歷史 phase 逾預算——`legacy（不判）`，見 §12.7.6）" % n_legacy)
