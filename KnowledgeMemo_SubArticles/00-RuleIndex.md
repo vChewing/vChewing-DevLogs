@@ -10,7 +10,8 @@
 |---|---|---|
 | `16-WorkDetails-L10nAndTerminology.md` | 語系、語體、術語、命名與文案 | 16 |
 | `17-WorkDetails-ProcessAndLint.md` | 工作流程、lint／format、提交與產物對帳 | 17 |
-| `18-WorkDetails-BuildAndTest.md` | 建置、工具鏈、測試紀律與安裝換檔 | 16 |
+| `18-WorkDetails-BuildAndTest.md` | 建置、工具鏈、測試紀律與安裝換檔 | 14 |
+| `22-WorkDetails-TestIsolationSeams.md` | 測試隔離之縫：類 A／類 B 真因、兩道縫與其收束 | 4 |
 | `19-WorkDetails-TypingEngineAndIMK.md` | 輸入引擎、查詢語義、IMK 診斷與狀態護欄 | 29 |
 | `20-WorkDetails-DualpinSchema.md` | 雙拼 schema、引擎與其精簡 | 10 |
 | `21-WorkDetails-DualpinUI.md` | 雙拼之界面行為、編輯器與偏好槽 | 14 |
@@ -66,8 +67,10 @@
 | PKG 安裝路徑與 App 安裝器同罪；換檔後之保證刀須以 console user 為界 | ★ | `18-WorkDetails-BuildAndTest.md` | 696 |
 | 單元測試不得並行跑兩支 `swift test` 行程 | ★ | `18-WorkDetails-BuildAndTest.md` | 725 |
 | 工具鏈對等：6.x 側全綠**不等於**5.10 可編 | ★ | `18-WorkDetails-BuildAndTest.md` | 727 |
-| 測試目標之 `.serialized` 分佈與其四類真因 | ★ | `18-WorkDetails-BuildAndTest.md` | 831 |
-| 偏好容器與使用者資料 I/O 之兩道縫 | ★ | `18-WorkDetails-BuildAndTest.md` | 832 |
+| 測試目標之 `.serialized` 分佈與其四類真因 | ★ | `22-WorkDetails-TestIsolationSeams.md` | 831 |
+| 偏好容器與使用者資料 I/O 之兩道縫 | ★ | `22-WorkDetails-TestIsolationSeams.md` | 832 |
+| 偏好容器與資料 I/O 之縫下推至實例 | ★ | `22-WorkDetails-TestIsolationSeams.md` | 833 |
+| 類 B 靜態之收束：辭典物件化與宿主注入 | ★ | `22-WorkDetails-TestIsolationSeams.md` | 834 |
 | 判「某模式是否生效」時，凡有第二處就地複製其判定者，即為新增維度時之盲區 | ★ | `19-WorkDetails-TypingEngineAndIMK.md` | 645 |
 | 一個功能「失效」時，先分清「相爭落敗」與「從未執行」 | ★ | `19-WorkDetails-TypingEngineAndIMK.md` | 646 |
 | 紅線之判讀：先讀其自陳之理由，再讀其禁令 | ★ | `19-WorkDetails-TypingEngineAndIMK.md` | 651 |

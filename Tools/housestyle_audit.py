@@ -115,7 +115,7 @@ LARGE_PHASES = {241, 245, 250, 251, 252, 258, 259, 260, 261,      # 大型／系
                       # 僅列兩條）、三處 `UserDefaults` 縫之洩漏（含兩處直讀 `.standard`）、七項
                       # 被否決之方案、兩道縫之設計、P315–P320+ 之分期草案、五項驗收判準與五個
                       # 待事主裁定之點；型態按性質判定，非按字數。
-                315}  # P315 ＝ 大型：兩道縫下推至實例（17 檔：`LXFacade` 收 `locator:` 並派給五個
+                315,  # P315 ＝ 大型：兩道縫下推至實例（17 檔：`LXFacade` 收 `locator:` 並派給五個
                       # 使用者語言模組與感知器、`AppProperty` 改為建構時捕獲 `store`、`PrefMgr`
                       # 收 `init(store:)` 逐一套 126 項、`sharedSansDidSetOps` 改依容器身分快取、
                       # POM 五套房與遷移套房撤六處 `.serialized`、新 5 支用例），非「1–3 檔、零設計」
@@ -123,6 +123,16 @@ LARGE_PHASES = {241, 245, 250, 251, 252, 258, 259, 260, 261,      # 大型／系
                       # 逐次求值對實例化是阻礙）、兩處相反之取捨（包裝器必捕獲／共用管理器必逐次
                       # 解析）、一項實測反轉（`LXFacade.prefs` 捕獲致兩支紅）與三條陷阱；型態按
                       # 性質判定，非按字數。
+                316}  # P316 ＝ 大型：類 B 靜態之收束（36 檔、＋849／−477：新 `FactoryDictionary`
+                      # 物件收辭典／卡帶／注音文、`SessionHost` 收逐宿主辭典快取並注入會話、
+                      # `Shared.InputMode.lexicon` 之三層行程級快取整塊刪除、`inputMode` 升為
+                      # 會話協定要求（碼點解碼與提示不再問 `IMEApp.currentInputMode`）、
+                      # `UserDef` 七個靜態入口收 `store:`、`LibVanguardTests` 根與六個子套房撤
+                      # `.serialized`、新 `TestEnvironment` 慣用語與 5 支證明用例）。非修補型：
+                      # 其載一條取捨（辭典共用同一物件以保住生產端單次解析）、一條分工（會話
+                      # 宿主為唯一狀態根）、一項刪除（`productionCache`／`unitTestCache`／
+                      # `activeCache`）、三條界線延續（`IMEApp`／`LexiconAssemblyTests` 之 137
+                      # 處靜態呼叫／`SessionHost.shared` 未刪）與三條陷阱；型態按性質判定，非按字數。
 STANDARD_PHASES = {242, 243, 244, 246, 247, 248, 249,                # 標準 ⇒ 5,000
                    253, 254, 255, 256, 257,
                    262, 263, 264, 265, 266, 267,

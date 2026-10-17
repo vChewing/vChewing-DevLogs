@@ -499,12 +499,12 @@ swift test --disable-sandbox -c debug          # 刻意不帶 --no-parallel
 
 建置命令之環境事實：本 shell 內 `swift build`／`swift test` 均須加 `--disable-sandbox`，否則 `sandbox-exec: sandbox_apply: Operation not permitted`；另 `swift test` 即使加 `--disable-sandbox` 仍會印三條 `~/Library/org.swift.swiftpm` 與 `~/Library/Caches/org.swift.swiftpm` 不可寫之警告（不影響結果）。`--cache-path`／`--config-path`／`--security-path` 可用 `.tmp/` 下之目錄消除之。
 
-### 8.5 施行後仍未解者（§五 之分期草案此後僅餘 P316 起之各期）
+### 8.5 施行後仍未解者（P315、P316 兩期已施行，此處改記其後之狀態）
 
-1. **類 A／類 B 未除**：`PrefMgr.sharedSansDidSetOps`、`LXFacade.factoryTrie`／`lxCassette`／`lxPlainBopomofo`、`SessionHost.shared` 仍是行程級可變靜態，而它們才是 `LibVanguardTests`（136 秒、佔全量九成時間）之根 suite 必須 `.serialized` 的真因。
-2. **全域解析點之代價**：`OSUtils.defaultsStore` 與 `LXAssembly.userDataLocator` 皆為行程級可變全域。因此「換容器」在單一行程內仍是全有全無——兩個套房若真並行，會互搶同一顆全域。本稿 §七 案 (b)（實例持有、逐型別注入）因此從「可選」升為**解鎖 POM 套房並行的必要條件**；`PerceptionPersistor` 已具 `init(baseURL:)`，加一個 `locator:` 參數即可把縫一／縫二都下推到實例層。
+1. **類 A／類 B 已除**：類 A（行程級偏好容器）已於 P314 整塊刪除，代之以 `DefaultsStore`；類 B 分兩期收束——P315 把偏好容器與使用者資料 I/O 下推到實例，P316 再把 `LXFacade` 之 `factoryTrie`／`lxCassette`／`lxPlainBopomofo` 收進 `FactoryDictionary`、把 `SessionHost` 立為會話層唯一狀態根。`LibVanguardTests` 之根 suite 與其六個子套房之 `.serialized` 因此於 P316 撤除，全量 **781 支／75 套**全綠（不帶 `--no-parallel`）。
+2. **全域解析點仍在，但只管不注入者**：`OSUtils.defaultsStore` 與 `LXAssembly.userDataLocator` 皆保留（生產端無法逐型別注入），未注入者照舊受其管轄。P316 之後另有三處殘餘：`IMEApp.currentInputMode`（`InputSession_Delegates` 之四處 bleach、`IMEStateParsed` 之兩處仍問它；會話層則已改讀 `session.inputMode`）、`LexiconAssemblyTests` 之 137 處靜態呼叫（仍以 `FactoryDictionary.shared` 為域）、以及 `SharedTests` 根之 `.serialized`（其 `init` 之 `CandidateTextService.disableFinalSanityCheck()` 係行程級開關）。
 3. **`LXCassette` 與 `LXConsolidator` 未走縫**（原判定：前者唯讀資源、後者職責即就地修整檔案，皆無競爭）——此判定於同日第三波被事主推翻並已補做，見 §十。
-4. **`PrefMgr` 未收 `DefaultsStore`**：目前經 `OSUtils.defaultsStore` 間接取得。要讓 `PrefMgrProtocol` 之消費端能各自持有不同 store，仍須 §七 案 (b)。
+4. **`PrefMgr` 已收 `DefaultsStore`**（P315 之 `init(store:)` 逐一套 126 項），惟 `PrefMgrProtocol` 未強制 `store` 出席——此一型別層之強制仍屬未解。
 
 ### 8.6 施行後補正：Swift 5.10 工具鏈對等（同日）
 
